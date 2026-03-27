@@ -60,8 +60,6 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
   const gameRef = useRef(game);
   gameRef.current = game;
   const initializedRef = useRef(false);
-  const timerIntervalRef = useRef<number | null>(null);
-  const lastUpdateTimeRef = useRef<number>(Date.now());
 
   // Calculate material advantage
   const calculateMaterialAdvantage = (forColor: 'white' | 'black'): number => {
@@ -123,39 +121,15 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
     return () => {
       socketService.removeAllListeners();
       socketService.disconnect();
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current);
-      }
     };
   }, []);
 
-  // Client-side timer countdown
+  // Listen for real-time timer updates from server
   useEffect(() => {
-    if (gameStatus !== 'playing' || !gameRoom) return;
-
-    if (timerIntervalRef.current) {
-      clearInterval(timerIntervalRef.current);
-    }
-
-    timerIntervalRef.current = window.setInterval(() => {
-      setTimeLeft(prev => {
-        const currentTurn = game.turn() === 'w' ? 'white' : 'black';
-        const newTime = { ...prev };
-        
-        if (newTime[currentTurn] > 0) {
-          newTime[currentTurn] = Math.max(0, newTime[currentTurn] - 1);
-        }
-        
-        return newTime;
-      });
-    }, 1000);
-
-    return () => {
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current);
-      }
-    };
-  }, [gameStatus, gameRoom, game]);
+    socketService.onTimeUpdate((timeLeft) => {
+      setTimeLeft(timeLeft);
+    });
+  }, []);
 
   const calculateCapturedPiecesFromFEN = (fen: string) => {
     const startingPieces = { p: 8, n: 2, b: 2, r: 2, q: 1, k: 1 };
@@ -201,7 +175,6 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
       
       if (room.timeLeft) {
         setTimeLeft(room.timeLeft);
-        lastUpdateTimeRef.current = Date.now();
       }
       
       const socketId = socketService.getSocketId();

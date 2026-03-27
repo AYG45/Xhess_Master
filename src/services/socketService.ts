@@ -1,3 +1,5 @@
+import { io, Socket } from 'socket.io-client';
+
 export interface GameRoom {
   id: string;
   timeControl: string;
@@ -27,157 +29,221 @@ export interface Player {
 }
 
 class SocketService {
+  private socket: Socket | null = null;
   private isConnected = false;
-  private apiUrl: string;
   private currentPlayerId: string | null = null;
-  private pollingInterval: number | null = null;
   private callbacks: {
     gameUpdate?: (room: GameRoom) => void;
     gameEnd?: (result: { winner?: 'white' | 'black'; reason: string }) => void;
+    playerJoined?: (player: Player) => void;
+    playerLeft?: (playerId: string) => void;
+    moveReceived?: (move: { from: string; to: string; promotion?: string; fen: string }) => void;
+    timeUpdate?: (timeLeft: { white: number; black: number }) => void;
   } = {};
 
   constructor() {
-    this.apiUrl = import.meta.env.VITE_API_URL || '/api';
+    // Socket.IO will be initialized on connect
   }
 
   async connect(): Promise<void> {
-    this.isConnected = true;
-    return Promise.resolve();
+    if (this.socket?.connected) {
+      return Promise.resolve();
+    }
+
+    // Clean up stale disconnected socket
+    if (this.socket) {
+      this.socket.removeAllListeners();
+      this.socket.disconnect();
+      this.socket = null;
+    }
+
+    const serverUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001';
+    
+    this.socket = io(serverUrl, {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5
+    });
+
+    return new Promise((resolve, reject) => {
+      this.socket!.on('connect', () => {
+        this.isConnected = true;
+        this.currentPlayerId = this.socket!.id ?? null;
+        this.setupListeners();
+        resolve();
+      });
+
+      this.socket!.on('connect_error', (error) => {
+        console.error('Connection error:', error);
+        reject(error);
+      });
+    });
   }
 
   disconnect() {
-    this.isConnected = false;
-    this.stopPolling();
-  }
-
-  private startPolling(roomId: string) {
-    this.stopPolling();
-    
-    this.pollingInterval = window.setInterval(async () => {
-      try {
-        const response = await fetch(`${this.apiUrl}/rooms?action=get&roomId=${roomId}`);
-        const data = await response.json();
-        
-        if (data.success && data.room) {
-          if (this.callbacks.gameUpdate) {
-            this.callbacks.gameUpdate(data.room);
-          }
-          
-          if (data.room.status === 'finished' && this.callbacks.gameEnd) {
-            this.callbacks.gameEnd({
-              winner: data.room.winner,
-              reason: data.room.reason || 'Game ended'
-            });
-            this.stopPolling();
-          }
-        }
-      } catch (error) {
-        console.error('Polling error:', error);
-      }
-    }, 1000);
-  }
-
-  private stopPolling() {
-    if (this.pollingInterval) {
-      clearInterval(this.pollingInterval);
-      this.pollingInterval = null;
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
     }
+    this.isConnected = false;
+  }
+
+  private setupListeners() {
+    if (!this.socket) return;
+
+    this.socket.on('game_update', (room: GameRoom) => {
+      if (this.callbacks.gameUpdate) {
+        this.callbacks.gameUpdate(room);
+      }
+    });
+
+    this.socket.on('game_end', (result: { winner?: 'white' | 'black'; reason: string }) => {
+      if (this.callbacks.gameEnd) {
+        this.callbacks.gameEnd(result);
+      }
+    });
+
+    this.socket.on('move_made', (move: { from: string; to: string; promotion?: string; fen: string }) => {
+      if (this.callbacks.moveReceived) {
+        this.callbacks.moveReceived(move);
+      }
+    });
+
+    this.socket.on('time_update', ({ timeLeft }: { timeLeft: { white: number; black: number } }) => {
+      if (this.callbacks.timeUpdate) {
+        this.callbacks.timeUpdate(timeLeft);
+      }
+    });
+
+    this.socket.on('error', (error: { message: string }) => {
+      console.error('Socket error:', error);
+    });
+
+    this.socket.on('player_joined', (player: Player) => {
+      if (this.callbacks.playerJoined) {
+        this.callbacks.playerJoined(player);
+      }
+    });
+
+    this.socket.on('player_left', (playerId: string) => {
+      if (this.callbacks.playerLeft) {
+        this.callbacks.playerLeft(playerId);
+      }
+    });
   }
 
   async createRoom(timeControl: string, playerName: string): Promise<GameRoom> {
-    const response = await fetch(`${this.apiUrl}/rooms?action=create`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ timeControl, playerName })
+    return new Promise((resolve, reject) => {
+      if (!this.socket) {
+        reject(new Error('Not connected'));
+        return;
+      }
+
+      const onCreated = ({ room, playerId }: { room: GameRoom; playerId: string }) => {
+        this.socket?.off('error', onError);
+        this.currentPlayerId = playerId;
+        resolve(room);
+      };
+
+      const onError = (error: { message: string }) => {
+        this.socket?.off('room_created', onCreated);
+        reject(new Error(error.message));
+      };
+
+      this.socket.emit('create_room', { timeControl, playerName });
+      this.socket.once('room_created', onCreated);
+      this.socket.once('error', onError);
     });
-
-    const data = await response.json();
-    
-    if (!data.success) {
-      throw new Error(data.error || 'Failed to create room');
-    }
-
-    this.currentPlayerId = data.playerId;
-    this.startPolling(data.room.id);
-    
-    return data.room;
   }
 
   async joinRoom(roomId: string, playerName: string): Promise<GameRoom> {
-    const response = await fetch(`${this.apiUrl}/rooms?action=join`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ roomId, playerName })
+    return new Promise((resolve, reject) => {
+      if (!this.socket) {
+        reject(new Error('Not connected'));
+        return;
+      }
+
+      const onJoined = ({ room, playerId }: { room: GameRoom; playerId: string }) => {
+        this.socket?.off('error', onError);
+        this.currentPlayerId = playerId;
+        resolve(room);
+      };
+
+      const onError = (error: { message: string }) => {
+        this.socket?.off('room_joined', onJoined);
+        reject(new Error(error.message));
+      };
+
+      this.socket.emit('join_room', { roomId, playerName });
+      this.socket.once('room_joined', onJoined);
+      this.socket.once('error', onError);
     });
-
-    const data = await response.json();
-    
-    if (!data.success) {
-      throw new Error(data.error || 'Failed to join room');
-    }
-
-    this.currentPlayerId = data.playerId;
-    this.startPolling(roomId);
-    
-    return data.room;
   }
 
   async makeMove(roomId: string, from: string, to: string, promotion?: string) {
-    const response = await fetch(`${this.apiUrl}/rooms?action=move`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        roomId, 
-        playerId: this.currentPlayerId,
-        from, 
-        to, 
-        promotion 
-      })
-    });
-
-    const data = await response.json();
-    
-    if (!data.success) {
-      throw new Error(data.error || 'Failed to make move');
+    if (!this.socket) {
+      throw new Error('Not connected');
     }
 
-    if (this.callbacks.gameUpdate) {
-      this.callbacks.gameUpdate(data.room);
-    }
-
-    return data.room;
+    this.socket.emit('make_move', { roomId, from, to, promotion });
   }
 
   async findOpponent(timeControl: string, playerName: string): Promise<GameRoom> {
-    const response = await fetch(`${this.apiUrl}/rooms?action=matchmaking`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ timeControl, playerName })
+    return new Promise((resolve, reject) => {
+      if (!this.socket) {
+        reject(new Error('Not connected'));
+        return;
+      }
+
+      const cleanup = () => {
+        this.socket?.off('game_found', onFound);
+        this.socket?.off('waiting_for_opponent', onWaiting);
+        this.socket?.off('error', onError);
+      };
+
+      const onFound = ({ room, playerId }: { room: GameRoom; playerId: string }) => {
+        cleanup();
+        this.currentPlayerId = playerId;
+        resolve(room);
+      };
+
+      const onWaiting = ({ room, playerId }: { room: GameRoom; playerId: string }) => {
+        cleanup();
+        this.currentPlayerId = playerId;
+        resolve(room);
+      };
+
+      const onError = (error: { message: string }) => {
+        cleanup();
+        reject(new Error(error.message));
+      };
+
+      this.socket.emit('find_opponent', { timeControl, playerName });
+      this.socket.once('game_found', onFound);
+      this.socket.once('waiting_for_opponent', onWaiting);
+      this.socket.once('error', onError);
     });
-
-    const data = await response.json();
-    
-    if (!data.success) {
-      throw new Error(data.error || 'Failed to find opponent');
-    }
-
-    this.currentPlayerId = data.playerId;
-    this.startPolling(data.room.id);
-    
-    return data.room;
   }
 
   onGameUpdate(callback: (room: GameRoom) => void) {
     this.callbacks.gameUpdate = callback;
   }
 
-  onPlayerJoined(_callback: (player: Player) => void) {
+  onPlayerJoined(callback: (player: Player) => void) {
+    this.callbacks.playerJoined = callback;
   }
 
-  onPlayerLeft(_callback: (playerId: string) => void) {
+  onPlayerLeft(callback: (playerId: string) => void) {
+    this.callbacks.playerLeft = callback;
   }
 
-  onMoveReceived(_callback: (move: { from: string; to: string; promotion?: string; fen: string }) => void) {
+  onMoveReceived(callback: (move: { from: string; to: string; promotion?: string; fen: string }) => void) {
+    this.callbacks.moveReceived = callback;
+  }
+
+  onTimeUpdate(callback: (timeLeft: { white: number; black: number }) => void) {
+    this.callbacks.timeUpdate = callback;
   }
 
   onGameEnd(callback: (result: { winner?: 'white' | 'black'; reason: string }) => void) {
@@ -186,7 +252,9 @@ class SocketService {
 
   removeAllListeners() {
     this.callbacks = {};
-    this.stopPolling();
+    if (this.socket) {
+      this.socket.removeAllListeners();
+    }
   }
 
   getConnectionStatus(): boolean {
@@ -197,8 +265,8 @@ class SocketService {
     return this.currentPlayerId || undefined;
   }
 
-  getSocket(): null {
-    return null;
+  getSocket(): Socket | null {
+    return this.socket;
   }
 }
 
