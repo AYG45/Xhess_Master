@@ -23,10 +23,10 @@ function generatePuzzles() {
   // BEGINNER PUZZLES (300 total)
   const beginnerThemes = [
     { name: 'Back Rank Mate', fen: '6k1/5ppp/8/8/8/8/5PPP/4R1K1 w - - 0 1', moves: ['e1e8'], rating: 800 },
-    { name: 'Fork', fen: 'r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 1', moves: ['f3g5', 'd8d7', 'g5f7'], rating: 900 },
-    { name: 'Pin', fen: 'r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 1', moves: ['c4b5'], rating: 920 },
-    { name: 'Skewer', fen: 'r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 1', moves: ['c4f7', 'e8f7', 'd1d5'], rating: 950 },
-    { name: 'Discovered Attack', fen: 'r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 0 1', moves: ['f3d4', 'c6d4', 'c4f7'], rating: 880 },
+    { name: 'Knight Fork', fen: 'r1bqkb1r/pppp1ppp/2n5/8/2BnP3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 1', moves: ['f3d4'], rating: 900 },
+    { name: 'Pin', fen: 'r1bqk2r/pppp1ppp/2n2n2/2b1p3/1bB1P3/2NP1N2/PPP2PPP/R1BQK2R w KQkq - 0 1', moves: ['c4f7'], rating: 920 },
+    { name: 'Remove Defender', fen: 'r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 0 1', moves: ['c4f7', 'e8f7', 'f3e5'], rating: 950 },
+    { name: 'Capture Hanging Piece', fen: 'rnbqkb1r/pppp1ppp/5n2/4p3/4P3/5N2/PPPPQPPP/RNB1KB1R w KQkq - 0 1', moves: ['e2e5'], rating: 880 },
   ];
 
   for (let i = 0; i < 60; i++) {
@@ -51,11 +51,11 @@ function generatePuzzles() {
 
   // INTERMEDIATE PUZZLES (400 total)
   const intermediateThemes = [
-    { name: 'Greek Gift', fen: 'r1bq1rk1/ppp2ppp/2np1n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQR1K1 w - - 0 1', moves: ['c4f7', 'g8f7', 'f3g5', 'f7g8', 'd1h5'], rating: 1300 },
-    { name: 'Deflection', fen: 'r2qkb1r/ppp2ppp/2n2n2/3pp3/2B1P3/2NP1N2/PPP2PPP/R1BQK2R w KQkq - 0 1', moves: ['c4f7', 'e8f7', 'c3d5'], rating: 1250 },
-    { name: 'Zwischenzug', fen: 'r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQ1RK1 b kq - 0 1', moves: ['c5f2', 'g1h1', 'f6e4'], rating: 1350 },
-    { name: 'Clearance', fen: '6k1/5ppp/8/8/8/8/5PPP/3RR1K1 w - - 0 1', moves: ['d1d8', 'g8h7', 'e1e7', 'h7g6', 'd8g8'], rating: 1400 },
-    { name: 'Double Attack', fen: 'r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 0 1', moves: ['f3g5'], rating: 1280 },
+    { name: 'Double Attack', fen: 'r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 0 1', moves: ['f3g5', 'd8e7', 'g5f7'], rating: 1300 },
+    { name: 'Skewer', fen: 'r3k2r/ppp2ppp/2n5/3q4/1b1P4/2N2Q2/PPP2PPP/R1B1K2R w KQkq - 0 1', moves: ['f3f7', 'e8d8', 'f7f8'], rating: 1250 },
+    { name: 'Discovered Check', fen: 'r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQ1RK1 w kq - 0 1', moves: ['c4f7', 'e8f7', 'f3g5'], rating: 1350 },
+    { name: 'Mate in 2', fen: 'r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 0 1', moves: ['h5f7', 'e8f7', 'c4e6'], rating: 1400 },
+    { name: 'Trapped Piece', fen: 'rnbqkb1r/ppp2ppp/3p1n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 1', moves: ['c4b5', 'c7c6', 'b5a4'], rating: 1280 },
   ];
 
   for (let i = 0; i < 80; i++) {
@@ -80,11 +80,11 @@ function generatePuzzles() {
 
   // ADVANCED PUZZLES (250 total)
   const advancedThemes = [
-    { name: 'Anastasia Mate', fen: '5rk1/5ppp/8/8/8/8/5PPP/3RN1K1 w - - 0 1', moves: ['d1d8', 'f8d8', 'e1f3', 'g8h8', 'f3g5'], rating: 1600 },
-    { name: 'Windmill', fen: 'r4rk1/1bqnbppp/p2p4/1p2p3/3NP3/P1N1BP2/1PP3PP/R2Q1RK1 w - - 0 1', moves: ['d4f5', 'e7f6', 'f5d6', 'c7d6', 'd1d6'], rating: 1700 },
-    { name: 'Zugzwang', fen: '8/8/8/8/8/3k4/3P4/3K4 w - - 0 1', moves: ['d1e1', 'd3e3', 'd2d4'], rating: 1550 },
-    { name: 'Queen Sacrifice', fen: 'r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 1', moves: ['d1h5', 'f6h5', 'c4f7', 'e8e7', 'f3g5'], rating: 1800 },
-    { name: 'Smothered Mate', fen: '5rk1/5ppp/8/8/8/8/5PPP/4RNK1 w - - 0 1', moves: ['e1e8', 'f8e8', 'f1g3'], rating: 1650 },
+    { name: 'Mate in 3', fen: 'r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 0 1', moves: ['h5f7', 'e8f7', 'c4e6', 'f7e8', 'e6g8'], rating: 1600 },
+    { name: 'Deflection', fen: 'r2qk2r/ppp2ppp/2n1b3/3pPb2/3P4/2PB1N2/PP3PPP/RNBQR1K1 w kq - 0 1', moves: ['d3h7', 'e8f8', 'e1e6'], rating: 1700 },
+    { name: 'Clearance Sacrifice', fen: 'r1bq1rk1/ppp2ppp/2n5/3pPb2/1b1P4/2NB1N2/PPP2PPP/R1BQR1K1 w - - 0 1', moves: ['d3h7', 'g8h7', 'f3g5', 'h7g8', 'd1h5'], rating: 1550 },
+    { name: 'Interference', fen: 'r2qkb1r/ppp2ppp/2n2n2/3p4/2BP4/2N2N2/PPP2PPP/R1BQK2R w KQkq - 0 1', moves: ['c4d5', 'c6e7', 'd5e6'], rating: 1800 },
+    { name: 'X-Ray Attack', fen: 'r3k2r/ppp2ppp/2n5/3q4/1b1P4/2N2Q2/PPP2PPP/R1B1K2R w KQkq - 0 1', moves: ['f3f7', 'e8d8', 'f7f8', 'd8c7', 'f8a8'], rating: 1650 },
   ];
 
   for (let i = 0; i < 50; i++) {
@@ -109,11 +109,11 @@ function generatePuzzles() {
 
   // EXPERT PUZZLES (50 total)
   const expertThemes = [
-    { name: 'Immortal Game', fen: 'r1b1kb1r/pppp1ppp/5n2/4q3/4n3/8/PPPPBPPP/RNBQK2R w KQkq - 0 1', moves: ['e2a6', 'b7a6', 'e1g1', 'e5g5', 'd1f3'], rating: 2000 },
-    { name: 'Petrosian Sacrifice', fen: 'r1bq1rk1/ppp2ppp/2np1n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQR1K1 w - - 0 1', moves: ['f3e5', 'd6e5', 'e1e5', 'c5f2', 'g1h1'], rating: 1950 },
-    { name: 'Lucena Position', fen: '1K6/1P6/8/8/8/8/r7/1k6 w - - 0 1', moves: ['b8c7', 'a2c2', 'c7d7', 'c2d2', 'd7e6'], rating: 1850 },
-    { name: 'Tal Combination', fen: 'r2q1rk1/ppp2ppp/2n1bn2/2bpp3/4P3/2NP1NP1/PPP1QPBP/R1B2RK1 w - - 0 1', moves: ['f3e5', 'c6e5', 'e2h5', 'g7g6', 'h5h6'], rating: 2100 },
-    { name: 'Philidor Position', fen: '4k3/R7/8/8/8/8/r7/4K3 w - - 0 1', moves: ['a7a8', 'e8d7', 'a8a7', 'd7e8'], rating: 1900 },
+    { name: 'Complex Combination', fen: 'r1bq1rk1/ppp2ppp/2n5/3pPb2/1b1P4/2NB1N2/PPP2PPP/R1BQR1K1 w - - 0 1', moves: ['d3h7', 'g8h7', 'f3g5', 'h7g8', 'd1h5', 'f8e8', 'h5h7', 'g8f8', 'h7h8'], rating: 2000 },
+    { name: 'Quiet Move Puzzle', fen: 'r2qkb1r/ppp2ppp/2n2n2/3p4/2BP4/2N2N2/PPP2PPP/R1BQK2R w KQkq - 0 1', moves: ['c4d5', 'c6e7', 'd5e6', 'f7e6', 'c3e4'], rating: 1950 },
+    { name: 'Endgame Precision', fen: '8/8/8/4k3/8/4K3/4P3/8 w - - 0 1', moves: ['e3d3', 'e5f5', 'd3d4', 'f5f6', 'd4e4'], rating: 1850 },
+    { name: 'Tactical Storm', fen: 'r2qkb1r/ppp2ppp/2n2n2/3pPb2/3P4/2PB1N2/PP3PPP/RNBQR1K1 w kq - 0 1', moves: ['d3h7', 'e8f8', 'e1e6', 'f5e6', 'h7g8'], rating: 2100 },
+    { name: 'Zugzwang Study', fen: '8/8/8/8/8/3k4/3P4/3K4 w - - 0 1', moves: ['d1e1', 'd3e3', 'e1f1', 'e3d3', 'd2d4'], rating: 1900 },
   ];
 
   for (let i = 0; i < 10; i++) {
