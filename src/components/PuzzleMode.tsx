@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
-import { fetchGitHubPuzzles, getRandomGitHubPuzzle, getGitHubPuzzleCount } from '../data/simplePuzzles.js';
-import type { ChessPuzzle } from '../data/simplePuzzles.js';
+import { fetchGitHubPuzzles, getRandomGitHubPuzzle, getGitHubPuzzleCount } from '../data/simplePuzzles';
+import type { ChessPuzzle } from '../data/simplePuzzles';
 
 interface PuzzleModeProps {
   onBackToMenu: () => void;
