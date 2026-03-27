@@ -43,7 +43,7 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
     setIsLoading(true);
     
     try {
-      const fetchedPuzzles = await fetchGitHubPuzzles(difficulty, 50);
+      const fetchedPuzzles = await fetchGitHubPuzzles(difficulty, 500);
       setPuzzles(fetchedPuzzles);
       setCurrentPuzzleIndex(0);
       
@@ -198,7 +198,7 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
     
     setIsLoading(true);
     try {
-      const morePuzzles = await fetchGitHubPuzzles(selectedDifficulty, 20);
+      const morePuzzles = await fetchGitHubPuzzles(selectedDifficulty, 100);
       setPuzzles(prev => [...prev, ...morePuzzles]);
     } catch (error) {
       console.error('Failed to load more puzzles:', error);
