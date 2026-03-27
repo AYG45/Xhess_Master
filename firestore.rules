@@ -1,0 +1,19 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Games collection
+    match /games/{gameId} {
+      // Users can read their own games
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      
+      // Users can create games
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      
+      // Users can delete their own games
+      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      
+      // Users cannot update games (they're immutable once created)
+      allow update: if false;
+    }
+  }
+}
