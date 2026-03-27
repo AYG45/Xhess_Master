@@ -144,29 +144,19 @@ const ALL_PUZZLES = generatePuzzles();
 
 // Export functions
 export async function fetchGitHubPuzzles(
-  difficulty: 'beginner' | 'intermediate' | 'expert',
+  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert',
   count: number = 50
 ): Promise<ChessPuzzle[]> {
   await new Promise(resolve => setTimeout(resolve, 300));
   
-  const difficultyMap: Record<string, string> = {
-    'expert': 'advanced'
-  };
-  
-  const targetDifficulty = difficultyMap[difficulty] || difficulty;
-  const filtered = ALL_PUZZLES.filter(p => p.difficulty === targetDifficulty || (difficulty === 'expert' && p.difficulty === 'expert'));
+  const filtered = ALL_PUZZLES.filter(p => p.difficulty === difficulty);
   
   const shuffled = [...filtered].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, Math.min(count, shuffled.length));
 }
 
-export async function getRandomGitHubPuzzle(difficulty: 'beginner' | 'intermediate' | 'expert'): Promise<ChessPuzzle | null> {
-  const difficultyMap: Record<string, string> = {
-    'expert': 'advanced'
-  };
-  
-  const targetDifficulty = difficultyMap[difficulty] || difficulty;
-  const puzzles = ALL_PUZZLES.filter(p => p.difficulty === targetDifficulty || (difficulty === 'expert' && p.difficulty === 'expert'));
+export async function getRandomGitHubPuzzle(difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert'): Promise<ChessPuzzle | null> {
+  const puzzles = ALL_PUZZLES.filter(p => p.difficulty === difficulty);
   
   if (puzzles.length === 0) return null;
   
@@ -174,13 +164,8 @@ export async function getRandomGitHubPuzzle(difficulty: 'beginner' | 'intermedia
   return puzzles[randomIndex];
 }
 
-export function getGitHubPuzzleCount(difficulty: 'beginner' | 'intermediate' | 'expert'): number {
-  const difficultyMap: Record<string, string> = {
-    'expert': 'advanced'
-  };
-  
-  const targetDifficulty = difficultyMap[difficulty] || difficulty;
-  return ALL_PUZZLES.filter(p => p.difficulty === targetDifficulty || (difficulty === 'expert' && p.difficulty === 'expert')).length;
+export function getGitHubPuzzleCount(difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert'): number {
+  return ALL_PUZZLES.filter(p => p.difficulty === difficulty).length;
 }
 
 export function getTotalPuzzleCount(): number {

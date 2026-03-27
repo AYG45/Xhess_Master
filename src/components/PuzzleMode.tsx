@@ -9,7 +9,7 @@ interface PuzzleModeProps {
 }
 
 export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
-  const [selectedDifficulty, setSelectedDifficulty] = useState<'beginner' | 'intermediate' | 'expert' | null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<'beginner' | 'intermediate' | 'advanced' | 'expert' | null>(null);
   const [currentPuzzle, setCurrentPuzzle] = useState<ChessPuzzle | null>(null);
   const [game, setGame] = useState(new Chess());
   const [position, setPosition] = useState('');
@@ -38,7 +38,7 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
     }
   }, [currentPuzzle]);
 
-  const selectDifficulty = async (difficulty: 'beginner' | 'intermediate' | 'expert') => {
+  const selectDifficulty = async (difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert') => {
     setSelectedDifficulty(difficulty);
     setIsLoading(true);
     
@@ -253,10 +253,16 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
       features: ['Mate in 2', 'Complex tactics', 'Small sacrifices', 'Hints available'],
     },
     {
+      id: 'advanced' as const,
+      label: 'Advanced',
+      tag: '1600 – 2000',
+      features: ['Mate in 3', 'Sacrifices', 'Complex patterns', 'Hints available'],
+    },
+    {
       id: 'expert' as const,
       label: 'Expert',
-      tag: '1800 – 2500',
-      features: ['Mate in 3–4', 'Complex sacrifices', 'Advanced tactics', 'No hints'],
+      tag: '2000 – 2500',
+      features: ['Mate in 4+', 'Master level', 'Famous patterns', 'No hints'],
     },
   ];
 
@@ -297,9 +303,9 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
             background: 'var(--border)',
             border: '1px solid var(--border)',
             borderRadius: 'var(--radius-lg)',
-            overflow: 'hidden',
+            overflow: 'auto',
             width: '100%',
-            maxWidth: '720px',
+            maxWidth: '960px',
           }}>
             {DIFFICULTIES.map((d, i) => (
               <div
