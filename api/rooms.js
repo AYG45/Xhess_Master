@@ -35,12 +35,22 @@ module.exports = async (req, res) => {
     return;
   }
 
+  // Parse body if it's a string (Vercel sometimes sends it as string)
+  let body = req.body;
+  if (typeof body === 'string') {
+    try {
+      body = JSON.parse(body);
+    } catch (e) {
+      body = {};
+    }
+  }
+
   const { action } = req.query;
 
   try {
     switch (action) {
       case 'create':
-        const { timeControl, playerName } = req.body;
+        const { timeControl, playerName } = body;
         const { minutes, increment } = parseTimeControl(timeControl);
         const initialTime = minutes * 60;
         
@@ -67,7 +77,7 @@ module.exports = async (req, res) => {
         break;
 
       case 'join':
-        const { roomId: joinRoomId, playerName: joinerName } = req.body;
+        const { roomId: joinRoomId, playerName: joinerName } = body;
         const joinRoom = gameRooms.get(joinRoomId);
         
         if (!joinRoom) {
@@ -107,7 +117,7 @@ module.exports = async (req, res) => {
         break;
 
       case 'move':
-        const { roomId: moveRoomId, playerId: movePlayerId, from, to, promotion } = req.body;
+        const { roomId: moveRoomId, playerId: movePlayerId, from, to, promotion } = body;
         const moveRoom = gameRooms.get(moveRoomId);
         
         if (!moveRoom) {
