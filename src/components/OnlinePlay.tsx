@@ -50,7 +50,7 @@ export const OnlinePlay: React.FC<OnlinePlayProps> = ({ onBackToMenu }) => {
   const handleTimeControlSelect = (id: string) => {
     if (id === 'challenge') { setShowChallenge(true); return; }
     setSelectedTimeControl(id);
-    setGameMode('matchmaking');
+    setGameMode('create');
   };
 
   const handleChallengeAction = (action: 'create' | 'join') => {
@@ -60,7 +60,7 @@ export const OnlinePlay: React.FC<OnlinePlayProps> = ({ onBackToMenu }) => {
 
   const handleCustomGame = () => {
     setSelectedTimeControl(`${customTime}+${customIncrement}`);
-    setGameMode('matchmaking');
+    setGameMode('create');
   };
 
   if (gameMode) {
