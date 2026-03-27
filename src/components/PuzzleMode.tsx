@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
-import { fetchGitHubPuzzles, getRandomGitHubPuzzle, getGitHubPuzzleCount, type ChessPuzzle } from '../data/simplePuzzles';
+import { fetchGitHubPuzzles, getRandomGitHubPuzzle, getGitHubPuzzleCount } from '../data/simplePuzzles.js';
+import type { ChessPuzzle } from '../data/simplePuzzles.js';
 
 interface PuzzleModeProps {
   onBackToMenu: () => void;
@@ -487,12 +488,10 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
             maxHeight: '520px',
           }}>
             <Chessboard
-              position={position}
-              onPieceDrop={onDrop}
-              boardOrientation={currentPuzzle?.playerToMove || 'white'}
-              customBoardStyle={{
-                borderRadius: '4px',
-                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.5)'
+              options={{
+                position,
+                boardOrientation: currentPuzzle?.playerToMove || 'white',
+                onPieceDrop: ({ sourceSquare, targetSquare }) => targetSquare ? onDrop(sourceSquare, targetSquare) : false
               }}
             />
           </div>
