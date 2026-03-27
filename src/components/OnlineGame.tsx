@@ -59,6 +59,7 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
 
   const gameRef = useRef(game);
   gameRef.current = game;
+  const initializedRef = useRef(false);
 
   // Calculate material advantage
   const calculateMaterialAdvantage = (forColor: 'white' | 'black'): number => {
@@ -77,6 +78,9 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
   };
 
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
     setCapturedPieces({
       white: { p: 0, n: 0, b: 0, r: 0, q: 0 },
       black: { p: 0, n: 0, b: 0, r: 0, q: 0 }
@@ -118,7 +122,7 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
       socketService.removeAllListeners();
       socketService.disconnect();
     };
-  }, [gameMode, timeControl, playerName, roomCode]);
+  }, []);
 
   const setupSocketListeners = () => {
     socketService.onGameUpdate((room: GameRoom) => {
@@ -564,7 +568,7 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
                 animation: 'spin 0.8s linear infinite'
               }} />
               <h2 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.5rem' }}>
-                Waiting for opponent...
+                {gameMode === 'matchmaking' ? 'Finding opponent...' : 'Waiting for opponent...'}
               </h2>
               {gameMode === 'create' && (
                 <>
