@@ -66,8 +66,10 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
       if (!move) return false;
 
       const expectedMove = currentPuzzle.solution[solutionIndex];
+      const playerMove = from + to + (promotion || '');
       
-      if (move.san === expectedMove) {
+      // Compare UCI format (e.g., 'e1e8' or 'e7e8q')
+      if (playerMove === expectedMove || move.san === expectedMove) {
         // Correct move
         setPosition(game.fen());
         setSolutionIndex(prev => prev + 1);
@@ -103,11 +105,24 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
     
     if (!currentPuzzle || isCompleted || currentIndex >= currentPuzzle.solution.length) return;
 
-    const opponentMove = currentPuzzle.solution[currentIndex];
+    const opponentMoveStr = currentPuzzle.solution[currentIndex];
     
     try {
       const newGame = new Chess(game.fen());
-      const move = newGame.move(opponentMove);
+      let move;
+      
+      // Try UCI format first (e.g., 'e1e8')
+      if (opponentMoveStr.length >= 4) {
+        const from = opponentMoveStr.substring(0, 2);
+        const to = opponentMoveStr.substring(2, 4);
+        const promotion = opponentMoveStr.length > 4 ? opponentMoveStr[4] : undefined;
+        move = newGame.move({ from, to, promotion });
+      }
+      
+      // If UCI failed, try SAN format
+      if (!move) {
+        move = newGame.move(opponentMoveStr);
+      }
       
       if (move) {
         setGame(newGame);
@@ -120,11 +135,11 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
           setMessageType('success');
         } else {
           setIsPlayerTurn(true);
-          setMessage(`Opponent played ${opponentMove}. Your turn!`);
+          setMessage(`Opponent played ${move.san}. Your turn!`);
           setMessageType('info');
         }
       } else {
-        setMessage(`❌ Error: Invalid opponent move ${opponentMove}`);
+        setMessage(`❌ Error: Invalid opponent move ${opponentMoveStr}`);
         setMessageType('error');
       }
     } catch (error) {
@@ -472,11 +487,12 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
             maxHeight: '520px',
           }}>
             <Chessboard
-              options={{
-                position,
-                onPieceDrop: ({ sourceSquare, targetSquare }) =>
-                  targetSquare ? onDrop(sourceSquare, targetSquare) : false,
-                boardOrientation: currentPuzzle?.playerToMove || 'white',
+              position={position}
+              onPieceDrop={onDrop}
+              boardOrientation={currentPuzzle?.playerToMove || 'white'}
+              customBoardStyle={{
+                borderRadius: '4px',
+                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.5)'
               }}
             />
           </div>
