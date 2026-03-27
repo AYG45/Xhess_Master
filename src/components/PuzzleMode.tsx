@@ -396,8 +396,8 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
         {currentPuzzle && (
           <div style={{ position: 'relative' }}>
             <div style={{
-              width: 'min(90vw, 90vh, 600px)',
-              height: 'min(90vw, 90vh, 600px)',
+              width: 'min(85vw, calc(100vh - 250px), 500px)',
+              height: 'min(85vw, calc(100vh - 250px), 500px)',
               borderRadius: 'var(--radius-md)',
               overflow: 'hidden',
               boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
