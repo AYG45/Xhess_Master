@@ -102,7 +102,9 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
           setGameRoom(room);
           setGameStatus('waiting');
         } else if (gameMode === 'matchmaking') {
-          socketService.findOpponent(timeControl, playerName);
+          const room = await socketService.findOpponent(timeControl, playerName);
+          setGameRoom(room);
+          setGameStatus(room.status);
         }
       } catch (error) {
         console.error('Failed to connect:', error);

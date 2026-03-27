@@ -148,8 +148,23 @@ class SocketService {
     return data.room;
   }
 
-  findOpponent(_timeControl: string, _playerName: string) {
-    throw new Error('Matchmaking not implemented yet');
+  async findOpponent(timeControl: string, playerName: string): Promise<GameRoom> {
+    const response = await fetch(`${this.apiUrl}/rooms?action=matchmaking`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ timeControl, playerName })
+    });
+
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to find opponent');
+    }
+
+    this.currentPlayerId = data.playerId;
+    this.startPolling(data.room.id);
+    
+    return data.room;
   }
 
   onGameUpdate(callback: (room: GameRoom) => void) {

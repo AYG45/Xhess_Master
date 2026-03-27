@@ -116,6 +116,53 @@ module.exports = async (req, res) => {
         res.json({ success: true, room: getRoom });
         break;
 
+      case 'matchmaking':
+        const { timeControl: matchTimeControl, playerName: matchPlayerName } = body;
+        
+        // Check if there's a waiting player with same time control
+        let matchedRoom = null;
+        for (const [roomId, room] of gameRooms.entries()) {
+          if (room.status === 'waiting' && room.timeControl === matchTimeControl && !room.players.black) {
+            matchedRoom = room;
+            break;
+          }
+        }
+        
+        if (matchedRoom) {
+          // Join existing room
+          const matchPlayerId = `player_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+          matchedRoom.players.black = matchPlayerId;
+          matchedRoom.playerNames[matchPlayerId] = matchPlayerName;
+          matchedRoom.status = 'playing';
+          
+          res.json({ success: true, room: matchedRoom, playerId: matchPlayerId });
+        } else {
+          // Create new room and wait
+          const { minutes, increment } = parseTimeControl(matchTimeControl);
+          const initialTime = minutes * 60;
+          
+          const newRoomId = generateRoomId();
+          const newPlayerId = `player_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+          
+          const newRoom = {
+            id: newRoomId,
+            timeControl: matchTimeControl,
+            players: { white: newPlayerId, black: null },
+            playerNames: { [newPlayerId]: matchPlayerName },
+            status: 'waiting',
+            fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+            moves: [],
+            currentTurn: 'white',
+            timeLeft: { white: initialTime, black: initialTime },
+            increment,
+            lastMoveTime: Date.now()
+          };
+          
+          gameRooms.set(newRoomId, newRoom);
+          res.json({ success: true, room: newRoom, playerId: newPlayerId });
+        }
+        break;
+
       case 'move':
         const { roomId: moveRoomId, playerId: movePlayerId, from, to, promotion } = body;
         const moveRoom = gameRooms.get(moveRoomId);
