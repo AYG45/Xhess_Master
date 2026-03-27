@@ -775,6 +775,13 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
         .cb:hover { border-color: var(--border-light); color: var(--text-primary); background: var(--bg-hover); }
         .cb:disabled { opacity: 0.3; cursor: not-allowed; }
         .cb.on { background: var(--white); color: var(--black); border-color: var(--white); }
+        @media (max-width: 480px) {
+          .cb {
+            padding: 4px 8px;
+            font-size: 8px;
+            letter-spacing: 0.08em;
+          }
+        }
         .cs {
           padding: 5px 12px;
           background: var(--bg-card);
