@@ -1038,6 +1038,24 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
                 onPieceDrop: ({ sourceSquare, targetSquare }) => targetSquare ? onDrop(sourceSquare, targetSquare) : false,
                 onSquareClick,
                 squareStyles: {
+                  // Check indicator - highlight king in red
+                  ...(() => {
+                    const checkStyles: Record<string, React.CSSProperties> = {};
+                    if (game.inCheck()) {
+                      const turn = game.turn();
+                      const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+                      for (let rank = 0; rank < 8; rank++) {
+                        for (let file = 0; file < 8; file++) {
+                          const piece = game.board()[rank][file];
+                          if (piece?.type === 'k' && piece?.color === turn) {
+                            const square = `${files[file]}${8 - rank}`;
+                            checkStyles[square] = { backgroundColor: 'rgba(255, 0, 0, 0.5)' };
+                          }
+                        }
+                      }
+                    }
+                    return checkStyles;
+                  })(),
                   ...(lastMove && {
                     [lastMove.from]: { backgroundColor: 'rgba(255,255,255,0.15)' },
                     [lastMove.to]:   { backgroundColor: 'rgba(255,255,255,0.25)' },
