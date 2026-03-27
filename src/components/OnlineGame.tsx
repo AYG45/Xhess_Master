@@ -127,33 +127,9 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
       setGame(newGame);
       setPosition(room.fen);
       
-      const socketId = socketService.getSocketId();
-      if (room.players.white === socketId) {
-        setPlayerColor('white');
-        setOpponentName(room.playerNames?.[room.players.black || ''] || 'Opponent');
-      } else if (room.players.black === socketId) {
-        setPlayerColor('black');
-        setOpponentName(room.playerNames?.[room.players.white || ''] || 'Opponent');
-      }
-      
       if (room.timeLeft) {
         setTimeLeft(room.timeLeft);
       }
-    });
-
-    socketService.getSocket()?.on('game_found', (room: GameRoom) => {
-      setGameRoom(room);
-      setGameStatus('playing');
-      setShowNameInput(false);
-      
-      setCapturedPieces({
-        white: { p: 0, n: 0, b: 0, r: 0, q: 0 },
-        black: { p: 0, n: 0, b: 0, r: 0, q: 0 }
-      });
-      
-      const newGame = new Chess(room.fen);
-      setGame(newGame);
-      setPosition(room.fen);
       
       const socketId = socketService.getSocketId();
       if (room.players.white === socketId) {
@@ -163,48 +139,10 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
         setPlayerColor('black');
         setOpponentName(room.playerNames?.[room.players.white || ''] || 'Opponent');
       }
-      
-      const timeControlParts = timeControl.split('+');
-      const minutes = parseInt(timeControlParts[0]) || 3;
-      const initialTime = minutes * 60;
-      setTimeLeft({ white: initialTime, black: initialTime });
-    });
-
-    socketService.getSocket()?.on('waiting_for_opponent', () => {
-      setShowNameInput(false);
-      setGameStatus('waiting');
     });
 
     socketService.onPlayerJoined((_player: Player) => {
       // Player joined
-    });
-
-    socketService.onPlayerLeft((_playerId: string) => {
-      setGameStatus('waiting');
-    });
-
-    socketService.onMoveReceived((move) => {
-      const newGame = new Chess(gameRef.current.fen());
-      const moveResult = newGame.move({ from: move.from, to: move.to, promotion: move.promotion || 'q' });
-      
-      if (moveResult && moveResult.captured) {
-        const capturedPieceType = moveResult.captured.toLowerCase() as keyof CapturedPieces;
-        const capturerColor = moveResult.color === 'w' ? 'white' : 'black';
-        
-        setCapturedPieces(prev => ({
-          ...prev,
-          [capturerColor]: {
-            ...prev[capturerColor],
-            [capturedPieceType]: prev[capturerColor][capturedPieceType] + 1
-          }
-        }));
-      }
-      
-      if (moveResult) {
-        setGame(newGame);
-        setPosition(newGame.fen());
-        setLastMove({ from: move.from, to: move.to });
-      }
     });
 
     socketService.onGameEnd((result) => {
@@ -212,14 +150,7 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
       setGameStatus('finished');
     });
 
-    socketService.getSocket()?.on('time_update', ({ timeLeft: newTimeLeft }) => {
-      setTimeLeft(newTimeLeft);
-    });
-
-    socketService.getSocket()?.on('error', (error: any) => {
-      console.error('Socket error:', error);
-      setConnectionError(error.message || 'An error occurred');
-    });
+    // Error handling done via try/catch in API calls
   };
 
   const handleJoinGameWithCode = async () => {
