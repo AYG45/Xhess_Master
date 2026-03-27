@@ -3,6 +3,7 @@ import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 import { socketService, type GameRoom, type Player } from '../services/socketService';
 import { useAuth } from '../contexts/AuthContext';
+import { chessSounds } from '../utils/sounds';
 
 interface OnlineGameProps {
   timeControl: string;
@@ -131,6 +132,17 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
     });
   }, []);
 
+  // Play check/checkmate sounds when game state changes
+  useEffect(() => {
+    if (game.inCheck()) {
+      if (game.isCheckmate()) {
+        chessSounds.playCheckmate();
+      } else {
+        chessSounds.playCheck();
+      }
+    }
+  }, [position]); // Listen to position changes
+
   const calculateCapturedPiecesFromFEN = (fen: string) => {
     const startingPieces = { p: 8, n: 2, b: 2, r: 2, q: 1, k: 1 };
     const currentPieces = { white: { p: 0, n: 0, b: 0, r: 0, q: 0, k: 0 }, black: { p: 0, n: 0, b: 0, r: 0, q: 0, k: 0 } };
@@ -235,7 +247,17 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
       }
 
       const move = game.move({ from, to, promotion: promotion || 'q' });
-      if (!move) return false;
+      if (!move) {
+        chessSounds.playIllegalMove();
+        return false;
+      }
+
+      // Play appropriate sound
+      if (move.captured) {
+        chessSounds.playCapture();
+      } else {
+        chessSounds.playMove();
+      }
 
       if (move.captured) {
         const capturedPieceType = move.captured.toLowerCase() as keyof CapturedPieces;
@@ -583,6 +605,13 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
           </div>
           <button onClick={onBackToMenu} className="og-leaveBtn">
             Leave game
+          </button>
+          <button 
+            className="og-leaveBtn" 
+            onClick={() => chessSounds.toggle()}
+            style={{ opacity: chessSounds.isEnabled() ? 1 : 0.5, padding: '0.55rem 0.7rem' }}
+          >
+            {chessSounds.isEnabled() ? '🔊' : '🔇'}
           </button>
         </header>
 

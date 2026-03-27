@@ -3,6 +3,7 @@ import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 import { fetchGitHubPuzzles, getGitHubPuzzleCount } from '../data/simplePuzzles';
 import type { ChessPuzzle } from '../data/simplePuzzles';
+import { chessSounds } from '../utils/sounds';
 
 interface PuzzleModeProps {
   onBackToMenu: () => void;
@@ -65,17 +66,28 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
 
     try {
       const move = game.move({ from, to, promotion: promotion || 'q' });
-      if (!move) return false;
+      if (!move) {
+        chessSounds.playIllegalMove();
+        return false;
+      }
 
       const expectedMove = currentPuzzle.solution[solutionIndex];
       const playerMove = from + to + (promotion || '');
       
       if (playerMove === expectedMove || move.san === expectedMove) {
+        // Play appropriate sound
+        if (move.captured) {
+          chessSounds.playCapture();
+        } else {
+          chessSounds.playMove();
+        }
+        
         setPosition(game.fen());
         setSolutionIndex(prev => prev + 1);
         setIsPlayerTurn(false);
         
         if (solutionIndex + 1 >= currentPuzzle.solution.length) {
+          chessSounds.playCheckmate();
           setIsCompleted(true);
           setMessage(`🎉 Puzzle solved! ${currentPuzzle.explanation}`);
           setMessageType('success');
@@ -91,6 +103,7 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
         return true;
       } else {
         game.undo();
+        chessSounds.playIllegalMove();
         setMessage(`❌ That's not the right move. Try again!`);
         setMessageType('error');
         setShowWrongMoveReset(true);
@@ -124,11 +137,19 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
       }
       
       if (move) {
+        // Play appropriate sound
+        if (move.captured) {
+          chessSounds.playCapture();
+        } else {
+          chessSounds.playMove();
+        }
+        
         setGame(newGame);
         setPosition(newGame.fen());
         setSolutionIndex(currentIndex + 1);
         
         if (currentIndex + 1 >= currentPuzzle.solution.length) {
+          chessSounds.playCheckmate();
           setIsCompleted(true);
           setMessage(`🎉 Puzzle solved! ${currentPuzzle.explanation}`);
           setMessageType('success');
@@ -138,6 +159,7 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
           setMessageType('info');
         }
       } else {
+        chessSounds.playIllegalMove();
         setMessage(`❌ Error: Invalid opponent move ${opponentMoveStr}`);
         setMessageType('error');
       }
@@ -433,6 +455,45 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
                 </button>
               </div>
             )}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              marginBottom: '1rem' 
+            }}>
+              <button 
+                className="secondary" 
+                onClick={() => {
+                  setSelectedDifficulty(null);
+                  setCurrentPuzzle(null);
+                  setGame(new Chess());
+                  setPosition('');
+                  setMessage('');
+                  setMessageType('info');
+                  setSolutionIndex(0);
+                  setIsPlayerTurn(true);
+                  setIsCompleted(false);
+                }}
+              >
+                ← Change Difficulty
+              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                  {currentPuzzle?.category} • {currentPuzzle?.rating}
+                </span>
+                <button 
+                  className="secondary" 
+                  onClick={() => chessSounds.toggle()}
+                  style={{ 
+                    opacity: chessSounds.isEnabled() ? 1 : 0.5, 
+                    padding: '0.4rem 0.6rem',
+                    fontSize: '0.9rem'
+                  }}
+                >
+                  {chessSounds.isEnabled() ? '🔊' : '🔇'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

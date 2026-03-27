@@ -9,6 +9,7 @@ import type { GameMode, PlayerColor, BotDifficulty, SavedGame } from '../types';
 import { BOT_LEVELS } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { saveGame } from '../services/gameService';
+import { chessSounds } from '../utils/sounds';
 
 interface ChessGameProps {
   mode: GameMode;
@@ -53,6 +54,17 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
     bestMove, evaluation, mateIn,
     analyzePosition, analyzePositionAsync, getBestMove, resetAnalysis,
   } = useStockfish();
+
+  // Play check/checkmate sounds when game state changes
+  useEffect(() => {
+    if (game.inCheck()) {
+      if (game.isCheckmate()) {
+        chessSounds.playCheckmate();
+      } else {
+        chessSounds.playCheck();
+      }
+    }
+  }, [position]); // Listen to position changes
 
   const showTeacher = mode === 'analyze';
 
@@ -210,10 +222,20 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
       const gc = new Chess();
       gameRef.current.history({ verbose: true }).forEach(m => gc.move({ from: m.from, to: m.to, promotion: m.promotion }));
       const moveObj = gc.move({ from, to, promotion: 'q' });
-      if (!moveObj) return false;
+      if (!moveObj) {
+        chessSounds.playIllegalMove();
+        return false;
+      }
       const afterFen = gc.fen();
       const moveIdx = gameRef.current.history().length;
       const gameMove: GameMove = { san: moveObj.san, from, to, beforeFen, afterFen };
+      
+      // Play appropriate sound
+      if (moveObj.captured) {
+        chessSounds.playCapture();
+      } else {
+        chessSounds.playMove();
+      }
       
       // Check if this is a variation when analyzing a saved game
       if (mode === 'analyze' && savedGame && originalMoves.length > 0) {
@@ -976,6 +998,13 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
             </button>
           )}
           <span style={{ color: 'var(--text-muted)', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', fontWeight: 600 }}>
+          <button 
+            className="cb" 
+            onClick={() => chessSounds.toggle()}
+            style={{ opacity: chessSounds.isEnabled() ? 1 : 0.5 }}
+          >
+            {chessSounds.isEnabled() ? '🔊' : '🔇'}
+          </button>
             {mode === 'local' ? 'Local Play' : mode === 'vsBot' ? 'vs Engine' : mode === 'analyze' ? (savedGame ? 'Game Review' : 'Analysis') : mode === 'online' ? `Online · ${timeControl || 'Custom'}` : 'Game'}
             {mode === 'analyze' && savedGame && isInVariation && <span style={{ color: 'var(--accent-primary)', marginLeft: '0.5rem' }}>• Variation</span>}
           </span>
