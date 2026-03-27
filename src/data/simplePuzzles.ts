@@ -25,7 +25,7 @@ function generatePuzzles() {
     { name: 'Back Rank Mate', fen: '6k1/5ppp/8/8/8/8/5PPP/4R1K1 w - - 0 1', moves: ['e1e8'], rating: 800 },
     { name: 'Fork', fen: 'r1bqkb1r/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1', moves: ['f3g5', 'd8g5', 'd1g4'], rating: 900 },
     { name: 'Pin', fen: 'r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 1', moves: ['c4b5'], rating: 920 },
-    { name: 'Skewer', fen: 'r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 1', moves: ['c4f7', 'e8f7', 'd1d5'], rating: 950 },
+    { name: 'Skewer', fen: 'r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 1', moves: ['c4f7', 'e8f7', 'd1d5'], rating: 950 },
     { name: 'Discovered Attack', fen: 'r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 0 1', moves: ['f3d4', 'c6d4', 'c4f7'], rating: 880 },
   ];
 
