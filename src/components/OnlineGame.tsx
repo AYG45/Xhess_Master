@@ -60,6 +60,8 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
   const gameRef = useRef(game);
   gameRef.current = game;
   const initializedRef = useRef(false);
+  const timerIntervalRef = useRef<number | null>(null);
+  const lastUpdateTimeRef = useRef<number>(Date.now());
 
   // Calculate material advantage
   const calculateMaterialAdvantage = (forColor: 'white' | 'black'): number => {
@@ -121,8 +123,68 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
     return () => {
       socketService.removeAllListeners();
       socketService.disconnect();
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
     };
   }, []);
+
+  // Client-side timer countdown
+  useEffect(() => {
+    if (gameStatus !== 'playing' || !gameRoom) return;
+
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+    }
+
+    timerIntervalRef.current = window.setInterval(() => {
+      setTimeLeft(prev => {
+        const currentTurn = game.turn() === 'w' ? 'white' : 'black';
+        const newTime = { ...prev };
+        
+        if (newTime[currentTurn] > 0) {
+          newTime[currentTurn] = Math.max(0, newTime[currentTurn] - 1);
+        }
+        
+        return newTime;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
+    };
+  }, [gameStatus, gameRoom, game]);
+
+  const calculateCapturedPiecesFromFEN = (fen: string) => {
+    const startingPieces = { p: 8, n: 2, b: 2, r: 2, q: 1, k: 1 };
+    const currentPieces = { white: { p: 0, n: 0, b: 0, r: 0, q: 0, k: 0 }, black: { p: 0, n: 0, b: 0, r: 0, q: 0, k: 0 } };
+    
+    const position = fen.split(' ')[0];
+    for (const char of position) {
+      if (char === '/') continue;
+      if (char >= '1' && char <= '8') continue;
+      
+      const piece = char.toLowerCase() as keyof typeof startingPieces;
+      const color = char === char.toUpperCase() ? 'white' : 'black';
+      if (currentPieces[color][piece] !== undefined) {
+        currentPieces[color][piece]++;
+      }
+    }
+    
+    const captured = {
+      white: { p: 0, n: 0, b: 0, r: 0, q: 0 } as CapturedPieces,
+      black: { p: 0, n: 0, b: 0, r: 0, q: 0 } as CapturedPieces
+    };
+    
+    (['p', 'n', 'b', 'r', 'q'] as const).forEach(piece => {
+      captured.white[piece] = startingPieces[piece] - currentPieces.black[piece];
+      captured.black[piece] = startingPieces[piece] - currentPieces.white[piece];
+    });
+    
+    return captured;
+  };
 
   const setupSocketListeners = () => {
     socketService.onGameUpdate((room: GameRoom) => {
@@ -133,8 +195,13 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
       setGame(newGame);
       setPosition(room.fen);
       
+      // Calculate captured pieces from FEN
+      const captured = calculateCapturedPiecesFromFEN(room.fen);
+      setCapturedPieces(captured);
+      
       if (room.timeLeft) {
         setTimeLeft(room.timeLeft);
+        lastUpdateTimeRef.current = Date.now();
       }
       
       const socketId = socketService.getSocketId();
