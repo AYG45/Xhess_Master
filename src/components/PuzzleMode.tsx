@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
-import { fetchGitHubPuzzles, getRandomGitHubPuzzle, getGitHubPuzzleCount } from '../data/simplePuzzles';
+import { fetchGitHubPuzzles, getGitHubPuzzleCount } from '../data/simplePuzzles';
 import type { ChessPuzzle } from '../data/simplePuzzles';
 
 interface PuzzleModeProps {
@@ -16,13 +16,13 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
   const [solutionIndex, setSolutionIndex] = useState(0);
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
   const [isCompleted, setIsCompleted] = useState(false);
-  const [showHint, setShowHint] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error' | 'info'>('info');
-
   const [puzzles, setPuzzles] = useState<ChessPuzzle[]>([]);
   const [currentPuzzleIndex, setCurrentPuzzleIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [hintClickCount, setHintClickCount] = useState(0);
+  const [showWrongMoveReset, setShowWrongMoveReset] = useState(false);
 
   useEffect(() => {
     if (currentPuzzle) {
@@ -32,7 +32,8 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
       setSolutionIndex(0);
       setIsPlayerTurn(true);
       setIsCompleted(false);
-      setShowHint(false);
+      setHintClickCount(0);
+      setShowWrongMoveReset(false);
       setMessage(`${currentPuzzle.title}: ${currentPuzzle.description}`);
       setMessageType('info');
     }
@@ -69,9 +70,7 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
       const expectedMove = currentPuzzle.solution[solutionIndex];
       const playerMove = from + to + (promotion || '');
       
-      // Compare UCI format (e.g., 'e1e8' or 'e7e8q')
       if (playerMove === expectedMove || move.san === expectedMove) {
-        // Correct move
         setPosition(game.fen());
         setSolutionIndex(prev => prev + 1);
         setIsPlayerTurn(false);
@@ -94,6 +93,7 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
         game.undo();
         setMessage(`❌ That's not the right move. Try again!`);
         setMessageType('error');
+        setShowWrongMoveReset(true);
         return false;
       }
     } catch (error) {
@@ -112,7 +112,6 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
       const newGame = new Chess(game.fen());
       let move;
       
-      // Try UCI format first (e.g., 'e1e8')
       if (opponentMoveStr.length >= 4) {
         const from = opponentMoveStr.substring(0, 2);
         const to = opponentMoveStr.substring(2, 4);
@@ -120,7 +119,6 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
         move = newGame.move({ from, to, promotion });
       }
       
-      // If UCI failed, try SAN format
       if (!move) {
         move = newGame.move(opponentMoveStr);
       }
@@ -148,6 +146,7 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
       setMessageType('error');
     }
   };
+
   const onDrop = (sourceSquare: string, targetSquare: string) => {
     return makeMove(sourceSquare, targetSquare);
   };
@@ -160,7 +159,8 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
       setSolutionIndex(0);
       setIsPlayerTurn(true);
       setIsCompleted(false);
-      setShowHint(false);
+      setHintClickCount(0);
+      setShowWrongMoveReset(false);
       setMessage(`${currentPuzzle.title}: ${currentPuzzle.description}`);
       setMessageType('info');
     }
@@ -176,7 +176,6 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
     } else {
       setMessage('🎊 You\'ve reached the end! Loading more puzzles...');
       setMessageType('info');
-      // Load more puzzles
       if (selectedDifficulty) {
         loadMorePuzzles();
       }
@@ -207,38 +206,25 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
     }
   };
 
-  const getRandomPuzzle = async () => {
-    if (!selectedDifficulty) return;
-    
-    setIsLoading(true);
-    try {
-      const randomPuzzle = await getRandomGitHubPuzzle(selectedDifficulty);
-      if (randomPuzzle) {
-        setCurrentPuzzle(randomPuzzle);
-        // Add to puzzles array if not already there
-        if (!puzzles.find(p => p.id === randomPuzzle.id)) {
-          setPuzzles(prev => [...prev, randomPuzzle]);
-          setCurrentPuzzleIndex(puzzles.length);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load random puzzle:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const toggleHint = () => {
-    if (currentPuzzle?.hint && selectedDifficulty !== 'expert') {
-      setShowHint(!showHint);
+    if (!currentPuzzle) return;
+    
+    if (hintClickCount === 0) {
+      if (currentPuzzle.hint && selectedDifficulty !== 'expert') {
+        setMessage(`💡 Hint: ${currentPuzzle.hint}`);
+        setMessageType('info');
+      } else {
+        setMessage(`💡 Next move: ${currentPuzzle.solution[solutionIndex]}`);
+        setMessageType('info');
+      }
+      setHintClickCount(1);
+    } else if (hintClickCount === 1) {
+      setMessage(`💡 Solution: ${currentPuzzle.solution.join(' → ')}. ${currentPuzzle.explanation || ''}`);
+      setMessageType('info');
+      setHintClickCount(2);
     }
   };
 
-  const showSolution = () => {
-    if (!currentPuzzle) return;
-    setMessage(`💡 Solution: ${currentPuzzle.solution.join(', ')}. ${currentPuzzle.explanation}`);
-    setMessageType('info');
-  };
   const DIFFICULTIES = [
     {
       id: 'beginner' as const,
@@ -351,176 +337,120 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
   }
 
   return (
-    <div className="puzzle-content" style={{
+    <div style={{
       display: 'flex',
+      flexDirection: 'column',
       height: '100%',
       background: 'var(--bg)',
       color: 'var(--text-primary)',
-      overflow: 'hidden',
     }}>
-      {/* Sidebar */}
-      <div className="puzzle-sidebar" style={{
-        width: '280px',
-        background: 'var(--bg-raised)',
-        padding: '1.25rem',
-        borderRight: '1px solid var(--border)',
+      {/* Minimal Top Bar */}
+      <div style={{
         display: 'flex',
-        flexDirection: 'column',
-        gap: '0.75rem',
-        overflowY: 'auto',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '1rem 1.5rem',
+        borderBottom: '1px solid var(--border)',
         flexShrink: 0,
       }}>
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <button onClick={onBackToMenu} style={{ color: 'var(--text-muted)', padding: '0.25rem', fontSize: '1rem' }}>←</button>
-          <div>
-            <p style={{ fontSize: '0.58rem', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>
-              {selectedDifficulty}
-            </p>
-            <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: '1rem', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--white)', margin: 0 }}>
-              Puzzles
-            </h2>
+        <button onClick={onBackToMenu} className="secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
+          ← Back
+        </button>
+        
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <button onClick={toggleHint} className="secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
+            {hintClickCount === 0 ? '💡 Hint' : hintClickCount === 1 ? '💡 Solution' : '✓ Shown'}
+          </button>
+          
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button onClick={previousPuzzle} disabled={currentPuzzleIndex <= 0} className="secondary" style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}>
+              ←
+            </button>
+            <button onClick={nextPuzzle} className={isCompleted ? 'primary' : 'secondary'} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}>
+              →
+            </button>
           </div>
         </div>
+      </div>
 
+      {/* Board Area */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1rem', position: 'relative' }}>
         {/* Message */}
-        <div style={{
-          background: 'var(--bg-card)',
-          border: `1px solid ${messageType === 'success' ? 'var(--border-mid)' : messageType === 'error' ? 'rgba(255,255,255,0.12)' : 'var(--border)'}`,
-          borderRadius: 'var(--radius-md)',
-          padding: '0.9rem',
-          fontSize: '0.78rem',
-          lineHeight: 1.5,
-          color: messageType === 'success' ? 'var(--text-primary)' : messageType === 'error' ? 'var(--gray-400)' : 'var(--text-secondary)',
-        }}>
-          {message}
-        </div>
+        {message && (
+          <div style={{
+            marginBottom: '1rem',
+            padding: '0.75rem 1.25rem',
+            background: messageType === 'success' ? 'rgba(34, 197, 94, 0.1)' : messageType === 'error' ? 'rgba(239, 68, 68, 0.1)' : 'var(--bg-card)',
+            border: `1px solid ${messageType === 'success' ? 'rgba(34, 197, 94, 0.3)' : messageType === 'error' ? 'rgba(239, 68, 68, 0.3)' : 'var(--border)'}`,
+            borderRadius: 'var(--radius-md)',
+            fontSize: '0.85rem',
+            color: 'var(--text-primary)',
+            maxWidth: '600px',
+            textAlign: 'center',
+          }}>
+            {message}
+          </div>
+        )}
 
-        {/* Hint */}
-        {currentPuzzle?.hint && selectedDifficulty !== 'expert' && (
-          <div>
-            <button
-              onClick={toggleHint}
-              className="secondary"
-              style={{ width: '100%', fontSize: '0.78rem', padding: '0.55rem 0.9rem' }}
-            >
-              {showHint ? 'Hide Hint' : 'Show Hint'}
-            </button>
-            {showHint && (
+        {/* Board */}
+        {currentPuzzle && (
+          <div style={{ position: 'relative' }}>
+            <div style={{
+              width: 'min(90vw, 90vh, 600px)',
+              height: 'min(90vw, 90vh, 600px)',
+              borderRadius: 'var(--radius-md)',
+              overflow: 'hidden',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+            }}>
+              <Chessboard
+                options={{
+                  position,
+                  boardOrientation: currentPuzzle?.playerToMove || 'white',
+                  onPieceDrop: ({ sourceSquare, targetSquare }) => targetSquare ? onDrop(sourceSquare, targetSquare) : false
+                }}
+              />
+            </div>
+
+            {/* Reset Button Overlay (only on wrong move) */}
+            {showWrongMoveReset && (
               <div style={{
-                marginTop: '0.5rem',
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border-light)',
-                borderRadius: 'var(--radius-md)',
-                padding: '0.75rem',
-                fontSize: '0.78rem',
-                color: 'var(--text-secondary)',
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 10,
               }}>
-                {currentPuzzle.hint}
+                <button 
+                  onClick={resetPuzzle}
+                  className="primary"
+                  style={{
+                    padding: '1rem 2rem',
+                    fontSize: '1rem',
+                    boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5)',
+                  }}
+                >
+                  🔄 Reset Puzzle
+                </button>
               </div>
             )}
           </div>
         )}
 
-        {/* Controls */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <button className="secondary" onClick={resetPuzzle} style={{ fontSize: '0.78rem', padding: '0.55rem 0.9rem' }}>
-            Reset Puzzle
-          </button>
-          <button className="secondary" onClick={getRandomPuzzle} disabled={isLoading} style={{ fontSize: '0.78rem', padding: '0.55rem 0.9rem' }}>
-            {isLoading ? 'Loading…' : 'Random Puzzle'}
-          </button>
-          <button className="secondary" onClick={showSolution} style={{ fontSize: '0.78rem', padding: '0.55rem 0.9rem' }}>
-            Show Solution
-          </button>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="secondary" onClick={previousPuzzle} disabled={currentPuzzleIndex <= 0} style={{ flex: 1, fontSize: '0.78rem', padding: '0.55rem 0.5rem' }}>
-              ← Prev
-            </button>
-            <button
-              className={isCompleted ? 'primary' : 'secondary'}
-              onClick={nextPuzzle}
-              disabled={isLoading}
-              style={{ flex: 1, fontSize: '0.78rem', padding: '0.55rem 0.5rem' }}
-            >
-              {isLoading ? '…' : 'Next →'}
-            </button>
-          </div>
-        </div>
-
-        {/* Puzzle info */}
+        {/* Puzzle Info */}
         {currentPuzzle && (
           <div style={{
-            marginTop: 'auto',
-            padding: '0.9rem',
-            background: 'var(--bg-card)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border)',
-            fontSize: '0.72rem',
+            marginTop: '1rem',
+            fontSize: '0.75rem',
             color: 'var(--text-muted)',
             display: 'flex',
-            flexDirection: 'column',
-            gap: '0.3rem',
+            gap: '1.5rem',
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Puzzle</span>
-              <span style={{ color: 'var(--text-secondary)' }}>{currentPuzzleIndex + 1} / {puzzles.length}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Rating</span>
-              <span style={{ color: 'var(--text-secondary)' }}>{currentPuzzle.rating}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Progress</span>
-              <span style={{ color: 'var(--text-secondary)' }}>{solutionIndex}/{currentPuzzle.solution.length} moves</span>
-            </div>
-            <div style={{ marginTop: '0.25rem', color: isCompleted ? 'var(--gray-300)' : isPlayerTurn ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: 600 }}>
-              {isCompleted ? 'Solved' : isPlayerTurn ? 'Your turn' : "Opponent's turn"}
-            </div>
+            <span>#{currentPuzzleIndex + 1} / {puzzles.length}</span>
+            <span>Rating: {currentPuzzle.rating}</span>
+            <span>{solutionIndex}/{currentPuzzle.solution.length} moves</span>
           </div>
         )}
       </div>
-
-      {/* Board */}
-      <div className="puzzle-board-area" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-        {currentPuzzle && (
-          <div className="puzzle-board-inner" style={{
-            width: 'min(calc(100vh - 120px), calc(100vw - 300px), 520px)',
-            height: 'min(calc(100vh - 120px), calc(100vw - 300px), 520px)',
-            borderRadius: 'var(--radius-md)',
-            overflow: 'hidden',
-            aspectRatio: '1',
-            maxWidth: '520px',
-            maxHeight: '520px',
-          }}>
-            <Chessboard
-              options={{
-                position,
-                boardOrientation: currentPuzzle?.playerToMove || 'white',
-                onPieceDrop: ({ sourceSquare, targetSquare }) => targetSquare ? onDrop(sourceSquare, targetSquare) : false
-              }}
-            />
-          </div>
-        )}
-      </div>
-      <style>{`
-        @media (max-width: 768px) {
-          .puzzle-board-inner {
-            width: min(calc(100vw - 1rem), calc(100vh - 320px)) !important;
-            height: min(calc(100vw - 1rem), calc(100vh - 320px)) !important;
-            max-width: 420px !important;
-            max-height: 420px !important;
-          }
-        }
-        @media (max-width: 480px) {
-          .puzzle-board-inner {
-            width: min(calc(100vw - 1rem), calc(100vh - 300px)) !important;
-            height: min(calc(100vw - 1rem), calc(100vh - 300px)) !important;
-            max-width: 360px !important;
-            max-height: 360px !important;
-          }
-        }
-      `}</style>
     </div>
   );
 };
