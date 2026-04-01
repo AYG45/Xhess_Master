@@ -387,18 +387,14 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
             <div className="og-name" title={name}>{name}</div>
             {active && <span className="og-turnPill">Your move</span>}
           </div>
-        </div>
-
-        <div className="og-clock" aria-label="Time remaining">
-          {formatTime(clockSeconds)}
-        </div>
-
-        <div className="og-captured">
-          <div className="og-capturedLabel">Captured</div>
-          <div className="og-capturedRow">
-            <div className="og-capturedPieces">{renderCapturedPieces(capturedColor)}</div>
-            {advantage > 0 && <span className="og-adv">+{advantage}</span>}
+          <div className="og-clock" aria-label="Time remaining">
+            {formatTime(clockSeconds)}
           </div>
+        </div>
+
+        <div className="og-capturedRow">
+          <div className="og-capturedPieces">{renderCapturedPieces(capturedColor)}</div>
+          {advantage > 0 && <span className="og-adv">+{advantage}</span>}
         </div>
       </section>
     );
@@ -925,8 +921,8 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
         .og-playerCard {
           background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
           border: 1px solid var(--border);
-          border-radius: 14px;
-          padding: 0.7rem 0.8rem;
+          border-radius: 10px;
+          padding: 0.4rem 0.65rem;
           box-shadow: 0 10px 30px rgba(0,0,0,0.25);
           backdrop-filter: blur(10px);
         }
@@ -957,23 +953,15 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
           white-space: nowrap;
         }
         .og-clock {
-          margin-top: 0.4rem;
           font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
-          font-size: 1.15rem;
+          font-size: 1rem;
           font-weight: 800;
           letter-spacing: 0.02em;
           color: var(--white);
+          flex-shrink: 0;
+          margin-left: auto;
         }
-        .og-captured { margin-top: 0.5rem; }
-        .og-capturedLabel {
-          font-size: 0.66rem;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          font-weight: 700;
-          color: var(--text-muted);
-          margin-bottom: 0.25rem;
-        }
-        .og-capturedRow { display: flex; align-items: center; gap: 0.5rem; }
+        .og-capturedRow { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.15rem; min-height: 20px; }
         .og-capturedPieces { flex: 1; min-width: 0; overflow: hidden; }
         .og-adv {
           flex: 0 0 auto;
@@ -1040,10 +1028,12 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
 
         @media (max-width: 480px) {
           .og-root { padding: 0.75rem; }
-          .og-grid { gap: 0.45rem; }
+          .og-grid { gap: 0.35rem; }
           .og-boardWrap { width: min(96vw, 420px); border-radius: 10px; }
-          .og-playerCard { padding: 0.65rem 0.75rem; }
-          .og-clock { font-size: 1.05rem; }
+          .og-playerCard { padding: 0.3rem 0.55rem; }
+          .og-clock { font-size: 0.9rem; }
+          .og-name { font-size: 0.8rem; }
+          .og-capturedPieces { font-size: 16px; }
         }
       `}</style>
     </div>
