@@ -336,7 +336,7 @@ export const detectOpeningFromMoves = (gameMoves: string[]): { opening: ChessOpe
       }
     }
     
-    if (matchLength > bestMatchLength && matchLength >= 3) { // At least 3 moves must match
+    if (matchLength > bestMatchLength && matchLength >= opening.moves.length) { // All opening moves must match
       bestMatch = opening;
       bestMatchLength = matchLength;
     }
@@ -350,32 +350,39 @@ export const detectOpeningFromMoves = (gameMoves: string[]): { opening: ChessOpe
 
 // Helper function to check if a move is theoretically sound in the opening
 export const isMoveInOpeningTheory = (gameMoves: string[], moveNumber: number): boolean => {
-  // Only check if we're in the opening phase (first 12 moves)
-  if (moveNumber > 12) return false;
+  // Only check if we're in the opening phase (first 15 moves)
+  if (moveNumber > 15) return false;
   
-  // STRICT APPROACH: Only mark as book move if we're EXACTLY following a known opening
+  // Check if the current move sequence follows a known opening
   const detection = detectOpeningFromMoves(gameMoves);
   
-  // Must be following a known opening AND the move must be the next move in that opening
+  // If all moves so far match a known opening line, it's a book move
   if (detection.opening && detection.moveInOpening === gameMoves.length) {
     return true;
   }
   
-  // Check if it's a common continuation from a known opening
-  if (detection.opening && detection.moveInOpening >= 3 && detection.moveInOpening === gameMoves.length - 1) {
+  // If we matched a known opening and the current move is a common continuation
+  if (detection.opening && detection.moveInOpening >= detection.opening.moves.length && detection.moveInOpening === gameMoves.length - 1) {
     const currentMove = gameMoves[gameMoves.length - 1];
     return detection.opening.commonContinuations?.includes(currentMove) || false;
   }
   
-  // For the very first moves only, allow some basic opening principles
-  if (gameMoves.length <= 2) {
+  // For early moves (first 4 half-moves), allow well-known opening moves
+  if (gameMoves.length <= 4) {
     const currentMove = gameMoves[gameMoves.length - 1];
-    const veryBasicMoves = new Set([
-      // Only the most fundamental first moves
-      'e4', 'd4', 'Nf3', 'c4', // White's main first moves
-      'e5', 'c5', 'e6', 'd5', 'Nf6', 'g6' // Black's main responses
+    const knownOpeningMoves = new Set([
+      // White's common first moves
+      'e4', 'd4', 'Nf3', 'c4', 'g3', 'b3', 'f4',
+      // Black's common responses to 1.e4
+      'e5', 'c5', 'e6', 'd5', 'Nf6', 'g6', 'c6', 'd6',
+      // Black's common responses to 1.d4
+      'Nf6', 'd5', 'f5', 'e6',
+      // Common second moves
+      'Nc6', 'Nc3', 'Bc4', 'Bb5', 'Bb4', 'Be2', 'Bg5',
+      'Bc5', 'Be7', 'Bd6', 'Bg7',
+      'O-O', 'a6', 'a3', 'h3', 'h6', 'd3', 'd6',
     ]);
-    return veryBasicMoves.has(currentMove);
+    return knownOpeningMoves.has(currentMove);
   }
   
   return false;

@@ -326,45 +326,62 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
     setGameHistory(prev => prev.slice(0, -undo)); setSelectedMoveIdx(null);
   };
 
-  const getMoveQualityBadges = useMemo(() => {
-    if (mode !== 'analyze' || selectedMoveIdx === null) return [];
-    const move = gameHistory[selectedMoveIdx];
-    if (!move?.beforeAnalysis || !move?.afterAnalysis) return [];
-    const isWhiteMove = selectedMoveIdx % 2 === 0;
+  const calculateMoveCPL = useCallback((move: GameMove, moveIndex: number): number => {
+    if (!move.beforeAnalysis || !move.afterAnalysis) return 0;
+
+    const playedUci = move.from + move.to;
+    const bestMoveUci = move.beforeAnalysis.bestMove;
+    const alternatives = move.beforeAnalysis.alternatives || [];
+
+    // 1) If the played move IS the engine's best move → CPL = 0
+    if (bestMoveUci && playedUci === bestMoveUci.slice(0, 4)) {
+      return 0;
+    }
+
+    // 2) If the played move is one of the top alternatives from the SAME
+    //    analysis, compute CPL from that analysis (no cross-analysis noise)
+    if (alternatives.length > 0) {
+      const bestEval = alternatives[0]?.evaluation ?? move.beforeAnalysis.evaluation;
+      const matchedAlt = alternatives.find(
+        alt => alt.move && playedUci === alt.move.slice(0, 4)
+      );
+      if (matchedAlt !== undefined) {
+        return Math.round(Math.max(0, (bestEval - matchedAlt.evaluation) * 100));
+      }
+    }
+
+    // 3) Fallback: compare independent before / after analyses
+    const isWhiteMove = moveIndex % 2 === 0;
     let evalBefore = move.beforeAnalysis.evaluation;
     let evalAfter  = move.afterAnalysis.evaluation;
     if (move.beforeFen.split(' ')[1] === 'b') evalBefore = -evalBefore;
     if (move.afterFen.split(' ')[1]  === 'b') evalAfter  = -evalAfter;
-    const evaluationChange = isWhiteMove ? evalBefore - evalAfter : evalAfter - evalBefore;
-    const centipawnLoss = Math.round(Math.max(0, evaluationChange * 100));
+    const evaluationChange = isWhiteMove
+      ? evalBefore - evalAfter
+      : evalAfter  - evalBefore;
+    return Math.round(Math.max(0, evaluationChange * 100));
+  }, []);
+
+  const getMoveQualityBadges = useMemo(() => {
+    if (mode !== 'analyze' || selectedMoveIdx === null) return [];
+    const move = gameHistory[selectedMoveIdx];
+    if (!move?.beforeAnalysis || !move?.afterAnalysis) return [];
+    const centipawnLoss = calculateMoveCPL(move, selectedMoveIdx);
     const gameMoves = gameHistory.slice(0, selectedMoveIdx + 1).map(m => m.san);
     const isBookMove = isMoveInOpeningTheory(gameMoves, Math.floor(selectedMoveIdx / 2) + 1);
     const quality = classifyMove(centipawnLoss, isBookMove, false, false);
     if (['blunder', 'mistake', 'inaccuracy', 'brilliant', 'excellent', 'best', 'good', 'book'].includes(quality.type))
       return [{ square: move.to, symbol: quality.icon, color: quality.color }];
     return [];
-  }, [mode, selectedMoveIdx, gameHistory]);
+  }, [mode, selectedMoveIdx, gameHistory, calculateMoveCPL]);
 
   const getMoveQuality = useCallback((move: GameMove, moveIndex: number) => {
     if (!move.beforeAnalysis || !move.afterAnalysis) return null;
-    
-    const isWhiteMove = moveIndex % 2 === 0;
-    let evalBefore = move.beforeAnalysis.evaluation;
-    let evalAfter = move.afterAnalysis.evaluation;
-    
-    const beforeTurn = move.beforeFen.split(' ')[1];
-    const afterTurn = move.afterFen.split(' ')[1];
-    
-    if (beforeTurn === 'b') evalBefore = -evalBefore;
-    if (afterTurn === 'b') evalAfter = -evalAfter;
-    
-    const evaluationChange = isWhiteMove ? evalBefore - evalAfter : evalAfter - evalBefore;
-    const centipawnLoss = Math.round(Math.max(0, evaluationChange * 100));
+    const centipawnLoss = calculateMoveCPL(move, moveIndex);
     const gameMoves = gameHistory.slice(0, moveIndex + 1).map(m => m.san);
     const isBookMove = isMoveInOpeningTheory(gameMoves, Math.floor(moveIndex / 2) + 1);
-    
     return classifyMove(centipawnLoss, isBookMove, false, false);
-  }, [gameHistory]);
+  }, [gameHistory, calculateMoveCPL]);
 
   // ── Captured pieces ──────────────────────────────────────────
   const getCapturedPieces = () => {
@@ -1236,25 +1253,13 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
                   const quality = getMoveQuality(move, lastMoveIndex);
                   const isWhiteMove = lastMoveIndex % 2 === 0;
                   const moveNumber = Math.floor(lastMoveIndex / 2) + 1;
+                  const centipawnLoss = calculateMoveCPL(move, lastMoveIndex);
                   
+                  // Normalized evals for display only
                   let evalBefore = move.beforeAnalysis.evaluation;
                   let evalAfter = move.afterAnalysis.evaluation;
-                  
-                  const beforeFenParts = move.beforeFen.split(' ');
-                  const afterFenParts = move.afterFen.split(' ');
-                  const beforeTurn = beforeFenParts[1];
-                  const afterTurn = afterFenParts[1];
-                  
-                  if (beforeTurn === 'b') evalBefore = -evalBefore;
-                  if (afterTurn === 'b') evalAfter = -evalAfter;
-                  
-                  let evaluationChange: number;
-                  if (isWhiteMove) {
-                    evaluationChange = evalBefore - evalAfter;
-                  } else {
-                    evaluationChange = evalAfter - evalBefore;
-                  }
-                  const centipawnLoss = Math.max(0, evaluationChange * 100);
+                  if (move.beforeFen.split(' ')[1] === 'b') evalBefore = -evalBefore;
+                  if (move.afterFen.split(' ')[1]  === 'b') evalAfter  = -evalAfter;
                   
                   return (
                     <div style={{
@@ -1275,7 +1280,7 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
                           </div>
                           <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginTop: '0.1rem' }}>
                             {evalBefore >= 0 ? '+' : ''}{evalBefore.toFixed(2)} → {evalAfter >= 0 ? '+' : ''}{evalAfter.toFixed(2)}
-                            {centipawnLoss > 0 && <span style={{ color: '#888' }}> ({Math.round(centipawnLoss)}cp)</span>}
+                            {centipawnLoss > 0 && <span style={{ color: '#888' }}> ({centipawnLoss}cp)</span>}
                           </div>
                         </div>
                       </div>
