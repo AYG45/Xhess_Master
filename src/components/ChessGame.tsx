@@ -915,22 +915,19 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
             overflow: hidden;
           }
           
-          /* Board column: auto-sized, centered */
+          /* Board column: fill available space */
           .cg-board-column {
-            width: min(100%, 520px) !important;
-            height: auto !important;
-            flex: 0 0 auto !important;
+            width: 100% !important;
+            height: 100% !important;
+            flex: 1 !important;
             align-items: center !important;
           }
           
-          /* Board: properly centered with dynamic sizing */
+          /* Board wrapper: let inline styles handle sizing */
           .cg-board-wrap {
-            flex: none !important;
-            width: min(95vw, calc(100vh - 280px)) !important;
-            height: min(95vw, calc(100vh - 280px)) !important;
-            max-width: min(95vw, 480px) !important;
-            max-height: min(95vw, 480px) !important;
-            margin: 0 auto !important;
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 0 !important;
           }
           
           /* Sidebar: compact fixed height at bottom */
@@ -1106,12 +1103,15 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
           {/* Board + player strips column */}
           <div className="cg-board-column" style={{
             display: 'flex', flexDirection: 'column', gap: '5px',
-            alignItems: 'center', justifyContent: 'center',
+            alignItems: 'center', justifyContent: 'flex-start',
+            height: '100%', width: '100%',
           }}>
             <PlayerStrip side="top" />
 
-            {/* Board */}
-            <div className="cg-board-wrap">            <Chessboard
+            {/* Board - takes remaining space and centers */}
+            <div className="cg-board-wrap" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
+              <div style={{ width: '100%', height: '100%', maxWidth: 'min(95vw, calc(100vh - 260px))', maxHeight: 'min(95vw, calc(100vh - 260px))', aspectRatio: '1' }}>
+                <Chessboard
               options={{
                 position,
                 boardOrientation,
@@ -1248,7 +1248,8 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
                 </div>
               </div>
             )}
-          </div>
+              </div>
+            </div>
 
             {/* Bottom player strip */}
             <PlayerStrip side="bottom" />
