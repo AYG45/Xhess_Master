@@ -892,7 +892,15 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
         @media (max-width: 768px) {
           .cg-root { height: 100vh; min-height: 100vh; overflow: hidden; display: flex; }
           
-          .cg-toolbar { padding: 0 0.5rem; min-height: 44px; height: 44px; gap: 0.35rem; flex-shrink: 0; }
+          .cg-toolbar { 
+            padding: 0 0.75rem !important;
+            min-height: 44px; 
+            height: 44px; 
+            gap: 0.5rem !important;
+            flex-shrink: 0;
+            align-items: center !important;
+            justify-content: space-between !important;
+          }
           
           /* Body: column, board area takes remaining space, sidebar fixed at bottom */
           .cg-body {
