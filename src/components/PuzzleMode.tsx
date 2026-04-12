@@ -296,9 +296,6 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
         overflowY: 'auto',
         boxSizing: 'border-box',
       }}>
-        <p style={{ fontSize: '0.6rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '1.1rem', fontWeight: 500 }}>
-          Tactics
-        </p>
         <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 'clamp(2.2rem, 5vw, 3.5rem)', fontWeight: 700, letterSpacing: '-0.05em', color: 'var(--white)', marginBottom: '0.6rem', textAlign: 'center', lineHeight: 1 }}>
           Chess Puzzles
         </h1>
