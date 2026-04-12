@@ -10,6 +10,7 @@ import { OnlinePlay } from './components/OnlinePlay';
 import { GameHistory } from './components/GameHistory';
 import type { GameMode, SavedGame } from './types';
 import './App.css';
+import { useTaptic } from 'taptickit/react';
 
 const NAV_ITEMS = [
   {
@@ -62,6 +63,7 @@ const PLAY_MODES = [
 ];
 
 function ChessApp() {
+  const { trigger } = useTaptic();
   const [mode, setMode] = useState<GameMode>('local');
   const [currentPage, setCurrentPage] = useState('play');
   const [gameStarted, setGameStarted] = useState(false);
@@ -125,7 +127,7 @@ function ChessApp() {
         return <div className="animate-slide-in" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}><PuzzleMode onBackToMenu={() => setCurrentPage('play')} /></div>;
 
       case 'learn':
-        return <div className="animate-slide-in" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}><Learn onNavigate={setCurrentPage} /></div>;
+        return <div className="animate-slide-in" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}><Learn /></div>;
 
       case 'history':
         return (
@@ -202,6 +204,7 @@ function ChessApp() {
               key={item.id}
               className={`nav-button ${currentPage === item.id ? 'active' : ''} ${sidebarCollapsed ? 'icon-only' : ''}`}
               onClick={() => {
+                trigger('selection');
                 setCurrentPage(item.id);
                 if (item.id === 'play') {
                   setGameStarted(false);
@@ -218,6 +221,11 @@ function ChessApp() {
           {/* User Profile at bottom of nav */}
           <div className="nav-user-profile">
             <UserProfile showUsername={true} />
+          </div>
+
+          {/* Mobile-only user profile button */}
+          <div className="nav-user-profile-mobile">
+            <UserProfile iconOnly={true} />
           </div>
         </nav>
       </aside>

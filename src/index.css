@@ -278,6 +278,8 @@ body { background: var(--bg); }
   padding: 0.75rem 0.9rem;
 }
 
+.nav-user-profile-mobile { display: none; }
+
 .user-profile { position: relative; }
 
 .login-button {
@@ -850,7 +852,7 @@ h1, h2, h3 {
   .app-container {
     flex-direction: column;
     height: 100vh;
-    overflow: hidden;
+    overflow: visible;
   }
 
   /* ── Bottom nav bar ── */
@@ -860,6 +862,7 @@ h1, h2, h3 {
     left: 0;
     right: 0;
     width: 100% !important;
+    overflow: visible;
     height: auto;
     border-right: none;
     border-top: 1px solid var(--border);
@@ -877,9 +880,86 @@ h1, h2, h3 {
     justify-content: space-around;
     align-items: center;
     min-height: 58px;
+    overflow: visible;
   }
 
   .nav-user-profile { display: none; }
+  .nav-user-profile-mobile { 
+    display: block; 
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem 0.2rem;
+    min-height: 44px;
+  }
+  .nav-user-profile-mobile .user-profile {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .nav-user-profile-mobile .login-button {
+    width: 100%;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.62rem;
+    border-radius: var(--radius-md);
+  }
+  .nav-user-profile-mobile .dropdown {
+    position: fixed;
+    bottom: 68px;
+    right: 1rem;
+    width: 200px;
+    z-index: 2000;
+  }
+  .nav-user-profile-mobile .user-dropdown {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 280px;
+    max-width: calc(100vw - 2rem);
+    z-index: 10000;
+    animation: none;
+    opacity: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    pointer-events: auto;
+  }
+
+  .nav-user-profile-mobile .dropdown-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+  }
+
+  .nav-user-profile-mobile .dropdown-item {
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    padding: 0.9rem 1rem;
+  }
+
+  .nav-user-profile-mobile .user-info {
+    padding: 1rem;
+  }
+
+  .nav-user-profile-mobile .user-name {
+    font-size: 0.95rem;
+  }
+
+  .nav-user-profile-mobile .user-email {
+    font-size: 0.8rem;
+  }
+
+  .nav-user-profile-mobile .user-profile {
+    overflow: visible;
+  }
 
   .nav-button {
     flex: 1;

@@ -1,13 +1,9 @@
 import React, { useState } from 'react';
 import { LearnOpenings } from './LearnOpenings';
 
-interface LearnProps {
-  onNavigate: (page: string) => void;
-}
-
 type LearnSection = 'main' | 'openings' | 'tactics' | 'endgames' | 'strategy';
 
-export const Learn: React.FC<LearnProps> = ({ onNavigate }) => {
+export const Learn: React.FC = () => {
   const [currentSection, setCurrentSection] = useState<LearnSection>('main');
 
   if (currentSection === 'openings') {
@@ -57,8 +53,7 @@ export const Learn: React.FC<LearnProps> = ({ onNavigate }) => {
       scrollbarColor: 'var(--gray-800) transparent',
     }}>
       <div style={{ maxWidth: '1000px', margin: '0 auto', padding: 'clamp(1.5rem, 4vw, 3.5rem) clamp(1rem, 3vw, 1.5rem)', color: 'var(--text-primary)' }}>
-        <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-          <p style={{ fontSize: '0.58rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '1.1rem', fontWeight: 500 }}>Study</p>
+        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
           <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 'clamp(2.2rem, 5vw, 3.5rem)', fontWeight: 700, letterSpacing: '-0.05em', color: 'var(--white)', marginBottom: '0.75rem', lineHeight: 1 }}>
             Study Matrix
           </h1>
@@ -116,13 +111,6 @@ export const Learn: React.FC<LearnProps> = ({ onNavigate }) => {
               )}
             </div>
           ))}
-        </div>
-
-        <div style={{ borderTop: '1px solid var(--border)', paddingTop: '2rem', textAlign: 'center' }}>
-          <div style={{ display: 'flex', gap: '0.6rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="primary" onClick={() => setCurrentSection('openings')}>Access Openings</button>
-            <button className="secondary" onClick={() => onNavigate('play')}>Back to Play</button>
-          </div>
         </div>
       </div>
     </div>

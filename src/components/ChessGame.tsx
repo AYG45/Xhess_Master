@@ -10,6 +10,7 @@ import { BOT_LEVELS } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { saveGame } from '../services/gameService';
 import { chessSounds } from '../utils/sounds';
+import { useTaptic } from 'taptickit/react';
 
 interface ChessGameProps {
   mode: GameMode;
@@ -32,6 +33,7 @@ const TOOLBAR_H = 44; // px — keep in sync with .cg-toolbar min-height
 
 export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessGameProps) => {
   const { currentUser } = useAuth();
+  const { trigger } = useTaptic();
   const [game, setGame]                         = useState(new Chess());
   const [position, setPosition]                 = useState(game.fen());
   const [playerColor, setPlayerColor]           = useState<PlayerColor>('white');
@@ -63,14 +65,17 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
       if (game.isCheckmate()) {
         chessSounds.playCheckmate();
         chessSounds.playGameEnd();
+        trigger('error');
       } else {
         chessSounds.playCheck();
+        trigger('warning');
       }
     } else if (game.isGameOver()) {
       // Game ended by draw (stalemate, repetition, insufficient material, 50-move rule)
       chessSounds.playGameEnd();
+      trigger('success');
     }
-  }, [position]); // Listen to position changes
+  }, [position, trigger]); // Listen to position changes
 
   const showTeacher = mode === 'analyze';
 
@@ -224,9 +229,20 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
 
   const makeMove = async (from: string, to: string, promotionPiece?: string): Promise<boolean> => {
     try {
+      const beforeFen = gameRef.current.fen();
+
+      // Check if the move is legal using the current game state
+      const legalMoves = gameRef.current.moves({ square: from as Square, verbose: true });
+      const isLegal = legalMoves.some(m => m.to === to);
+
+      if (!isLegal) {
+        chessSounds.playIllegalMove();
+        return false;
+      }
+
       // Check if this is a pawn promotion move
       const piece = gameRef.current.get(from as Square);
-      const isPromotion = piece?.type === 'p' && 
+      const isPromotion = piece?.type === 'p' &&
         ((piece.color === 'w' && to[1] === '8') || (piece.color === 'b' && to[1] === '1'));
 
       // If promotion and no piece selected yet, show dialog
@@ -236,14 +252,9 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
         return false;
       }
 
-      const beforeFen = gameRef.current.fen();
       const gc = new Chess();
       gameRef.current.history({ verbose: true }).forEach(m => gc.move({ from: m.from, to: m.to, promotion: m.promotion }));
       const moveObj = gc.move({ from, to, promotion: promotionPiece || 'q' });
-      if (!moveObj) {
-        chessSounds.playIllegalMove();
-        return false;
-      }
       const afterFen = gc.fen();
       const moveIdx = gameRef.current.history().length;
       const gameMove: GameMove = { san: moveObj.san, from, to, beforeFen, afterFen };
@@ -252,15 +263,19 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
       if (moveObj.san.includes('O-O')) {
         // Castling (O-O for kingside, O-O-O for queenside)
         chessSounds.playCastle();
+        trigger('heavy');
       } else if (moveObj.promotion) {
         // Pawn promotion
         chessSounds.playPromote();
+        trigger('success');
       } else if (moveObj.captured) {
         // Regular capture
         chessSounds.playCapture();
+        trigger('medium');
       } else {
         // Regular move
         chessSounds.playMove();
+        trigger('light');
       }
       
       // Check if this is a variation when analyzing a saved game

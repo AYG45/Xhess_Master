@@ -15,7 +15,7 @@ export class ChessSounds {
     // Define sound configurations - only using files that exist in public/sounds/
     const soundConfigs = [
       // Regular piece move
-      { name: 'move', src: ['/sounds/move.mp3.wav'] },
+      { name: 'move', src: ['/sounds/move.mp3.wav'] }, // File has both extensions
       // Piece capture
       { name: 'capture', src: ['/sounds/capture.mp3'] },
       // King in check
@@ -54,7 +54,9 @@ export class ChessSounds {
   }
 
   private play(name: string) {
-    if (!this.enabled || !this.initialized) return;
+    if (!this.enabled || !this.initialized) {
+      return;
+    }
 
     const sound = this.sounds.get(name);
     if (sound) {
