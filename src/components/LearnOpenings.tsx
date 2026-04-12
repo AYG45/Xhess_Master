@@ -23,12 +23,10 @@ export const LearnOpenings: React.FC<LearnOpeningsProps> = ({ onBackToLearn }) =
   const [selected, setSelected] = useState<ChessOpening | null>(null);
   const [filterCat, setFilterCat] = useState<'all' | ChessOpening['category']>('all');
   const [filterDiff, setFilterDiff] = useState<'all' | ChessOpening['difficulty']>('all');
-  const [search, setSearch] = useState('');
 
   const filtered = CHESS_OPENINGS
     .filter(o => filterCat === 'all' || o.category === filterCat)
     .filter(o => filterDiff === 'all' || o.difficulty === filterDiff)
-    .filter(o => !search || o.name.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => b.popularity - a.popularity);
 
   const diffDot = (d: ChessOpening['difficulty']) => {
@@ -184,7 +182,6 @@ export const LearnOpenings: React.FC<LearnOpeningsProps> = ({ onBackToLearn }) =
             Learn
           </button>
           <div>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Library</p>
             <h1 style={{ fontSize: 'clamp(1.2rem, 3vw, 1.75rem)', fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--white)', margin: 0 }}>
               Chess Openings
             </h1>
@@ -193,22 +190,6 @@ export const LearnOpenings: React.FC<LearnOpeningsProps> = ({ onBackToLearn }) =
 
         {/* Filters row */}
         <div className="openings-filters">
-          {/* Search */}
-          <div style={{ position: 'relative', flex: '1 1 180px', minWidth: 0 }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style={{ position: 'absolute', left: '0.6rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }}>
-              <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-            </svg>
-            <input
-              type="text"
-              placeholder="Search openings…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              style={{ width: '100%', padding: '0.45rem 0.75rem 0.45rem 2rem', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.8rem', fontFamily: 'inherit', outline: 'none', transition: 'border-color 0.2s' }}
-              onFocus={e => e.target.style.borderColor = 'var(--border-focus)'}
-              onBlur={e => e.target.style.borderColor = 'var(--border)'}
-            />
-          </div>
-
           <select value={filterCat} onChange={e => setFilterCat(e.target.value as any)} style={{ flex: '0 0 auto' }}>
             <option value="all">All Categories</option>
             <option value="e4">1.e4 — King's Pawn</option>
