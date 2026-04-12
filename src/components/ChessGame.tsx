@@ -890,27 +890,28 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
           text-align: left;
         }
         @media (max-width: 768px) {
-          .cg-root { height: 100%; overflow-y: auto; }
+          .cg-root { height: 100vh; min-height: 100vh; overflow: hidden; display: flex; }
           
-          .cg-toolbar { padding: 0 0.5rem; min-height: 44px; gap: 0.35rem; }
+          .cg-toolbar { padding: 0 0.5rem; min-height: 44px; height: 44px; gap: 0.35rem; flex-shrink: 0; }
           
           /* Body: column, board area takes remaining space, sidebar fixed at bottom */
           .cg-body {
+            flex: 1;
             flex-direction: column;
-            overflow: visible;
-            min-height: auto;
+            overflow: hidden;
+            min-height: 0;
           }
           
           /* Board area: fills remaining space, centers the board column */
           .cg-board-area {
             flex: 1;
             min-height: 0;
-            padding: 0.25rem 0.5rem;
+            padding: 0.5rem;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 4px;
+            gap: 6px;
             overflow: hidden;
           }
           
@@ -925,21 +926,23 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
           /* Board: properly centered with dynamic sizing */
           .cg-board-wrap {
             flex: none !important;
-            width: min(calc(100vw - 1rem), calc(100vh - 200px)) !important;
-            height: min(calc(100vw - 1rem), calc(100vh - 200px)) !important;
-            max-width: 400px !important;
-            max-height: 400px !important;
-            margin: auto !important;
+            width: min(95vw, calc(100vh - 280px)) !important;
+            height: min(95vw, calc(100vh - 280px)) !important;
+            max-width: min(95vw, 480px) !important;
+            max-height: min(95vw, 480px) !important;
+            margin: 0 auto !important;
           }
           
-          /* Sidebar: fixed height at bottom */
+          /* Sidebar: compact fixed height at bottom */
           .cg-sidebar {
             width: 100% !important;
-            height: 180px !important;
-            min-height: 140px !important;
+            height: 160px !important;
+            min-height: 120px !important;
+            max-height: 160px !important;
             border-left: none !important;
             border-top: 1px solid var(--border) !important;
-            flex-shrink: 0;
+            flex: none !important;
+            flex-shrink: 0 !important;
             overflow-y: auto;
           }
           
@@ -1103,7 +1106,7 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
           {/* Board + player strips column */}
           <div className="cg-board-column" style={{
             display: 'flex', flexDirection: 'column', gap: '5px',
-            alignItems: 'stretch', justifyContent: 'center',
+            alignItems: 'center', justifyContent: 'center',
           }}>
             <PlayerStrip side="top" />
 
