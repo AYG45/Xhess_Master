@@ -64,6 +64,7 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
   gameRef.current = game;
   const initializedRef = useRef(false);
   const tenSecondsPlayedRef = useRef(false);
+  const moveCountRef = useRef(0);
 
   // Calculate material advantage
   const calculateMaterialAdvantage = (forColor: 'white' | 'black'): number => {
@@ -194,19 +195,45 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
     socketService.onGameUpdate((room: GameRoom) => {
       setGameRoom(room);
       setGameStatus(room.status);
-      
+
       const newGame = new Chess(room.fen);
       setGame(newGame);
       setPosition(room.fen);
-      
+
+      // Detect opponent move and play sound
+      const newMoveCount = room.moves?.length || 0;
+      if (newMoveCount > moveCountRef.current && moveCountRef.current > 0) {
+        const lastMoveSan = room.moves[newMoveCount - 1];
+        if (lastMoveSan) {
+          // Parse SAN to detect move type
+          if (lastMoveSan.includes('O-O')) {
+            chessSounds.playCastle();
+          } else if (lastMoveSan.includes('=')) {
+            chessSounds.playPromote();
+          } else if (lastMoveSan.includes('x')) {
+            chessSounds.playCapture();
+          } else if (lastMoveSan.includes('#')) {
+            chessSounds.playCheckmate();
+          } else if (lastMoveSan.includes('+')) {
+            chessSounds.playCheck();
+          } else {
+            chessSounds.playMove();
+          }
+        }
+        // Reset click-to-move selection on opponent move
+        setSelectedSquare(null);
+        setLegalMoves([]);
+      }
+      moveCountRef.current = newMoveCount;
+
       // Calculate captured pieces from FEN
       const captured = calculateCapturedPiecesFromFEN(room.fen);
       setCapturedPieces(captured);
-      
+
       if (room.timeLeft) {
         setTimeLeft(room.timeLeft);
       }
-      
+
       const socketId = socketService.getSocketId();
       if (room.players.white === socketId) {
         setPlayerColor('white');
