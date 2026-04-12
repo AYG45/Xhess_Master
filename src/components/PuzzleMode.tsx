@@ -76,12 +76,16 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
       
       if (playerMove === expectedMove || move.san === expectedMove) {
         // Play appropriate sound
-        if (move.captured) {
+        if (move.san.includes('O-O')) {
+          chessSounds.playCastle();
+        } else if (move.promotion) {
+          chessSounds.playPromote();
+        } else if (move.captured) {
           chessSounds.playCapture();
         } else {
           chessSounds.playMove();
         }
-        
+
         setPosition(game.fen());
         setSolutionIndex(prev => prev + 1);
         setIsPlayerTurn(false);
@@ -138,12 +142,16 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
       
       if (move) {
         // Play appropriate sound
-        if (move.captured) {
+        if (move.san.includes('O-O')) {
+          chessSounds.playCastle();
+        } else if (move.promotion) {
+          chessSounds.playPromote();
+        } else if (move.captured) {
           chessSounds.playCapture();
         } else {
           chessSounds.playMove();
         }
-        
+
         setGame(newGame);
         setPosition(newGame.fen());
         setSolutionIndex(currentIndex + 1);

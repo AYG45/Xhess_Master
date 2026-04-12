@@ -231,9 +231,17 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
       const gameMove: GameMove = { san: moveObj.san, from, to, beforeFen, afterFen };
       
       // Play appropriate sound
-      if (moveObj.captured) {
+      if (moveObj.san.includes('O-O')) {
+        // Castling (O-O for kingside, O-O-O for queenside)
+        chessSounds.playCastle();
+      } else if (moveObj.promotion) {
+        // Pawn promotion
+        chessSounds.playPromote();
+      } else if (moveObj.captured) {
+        // Regular capture
         chessSounds.playCapture();
       } else {
+        // Regular move
         chessSounds.playMove();
       }
       

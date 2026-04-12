@@ -253,7 +253,11 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
       }
 
       // Play appropriate sound
-      if (move.captured) {
+      if (move.san.includes('O-O')) {
+        chessSounds.playCastle();
+      } else if (move.promotion) {
+        chessSounds.playPromote();
+      } else if (move.captured) {
         chessSounds.playCapture();
       } else {
         chessSounds.playMove();
