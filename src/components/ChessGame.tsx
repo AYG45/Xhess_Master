@@ -915,19 +915,22 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
             overflow: hidden;
           }
           
-          /* Board column: fill available space */
+          /* Board column: auto-sized, centered */
           .cg-board-column {
-            width: 100% !important;
-            height: 100% !important;
-            flex: 1 !important;
+            width: min(100%, 520px) !important;
+            height: auto !important;
+            flex: 0 0 auto !important;
             align-items: center !important;
           }
           
-          /* Board wrapper: let inline styles handle sizing */
+          /* Board wrapper: square, responsive, centered */
           .cg-board-wrap {
-            width: 100% !important;
-            height: 100% !important;
-            min-height: 0 !important;
+            flex: none !important;
+            width: min(95vw, calc(100vh - 260px)) !important;
+            height: min(95vw, calc(100vh - 260px)) !important;
+            max-width: min(95vw, 480px) !important;
+            max-height: min(95vw, 480px) !important;
+            margin: 0 auto !important;
           }
           
           /* Sidebar: compact fixed height at bottom */
@@ -1020,10 +1023,10 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
 
         @media (max-width: 480px) {
           .cg-board-wrap {
-            width: calc(100vw - 0.75rem) !important;
-            height: calc(100vw - 0.75rem) !important;
-            max-width: 380px !important;
-            max-height: 380px !important;
+            width: min(95vw, calc(100vh - 240px)) !important;
+            height: min(95vw, calc(100vh - 240px)) !important;
+            max-width: min(95vw, 400px) !important;
+            max-height: min(95vw, 400px) !important;
           }
         }
         
@@ -1103,15 +1106,13 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
           {/* Board + player strips column */}
           <div className="cg-board-column" style={{
             display: 'flex', flexDirection: 'column', gap: '5px',
-            alignItems: 'center', justifyContent: 'flex-start',
-            height: '100%', width: '100%',
+            alignItems: 'stretch', justifyContent: 'center',
           }}>
             <PlayerStrip side="top" />
 
-            {/* Board - takes remaining space and centers */}
-            <div className="cg-board-wrap" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
-              <div style={{ width: '100%', height: '100%', maxWidth: 'min(95vw, calc(100vh - 260px))', maxHeight: 'min(95vw, calc(100vh - 260px))', aspectRatio: '1' }}>
-                <Chessboard
+            {/* Board */}
+            <div className="cg-board-wrap">
+              <Chessboard
               options={{
                 position,
                 boardOrientation,
@@ -1248,7 +1249,6 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
                 </div>
               </div>
             )}
-              </div>
             </div>
 
             {/* Bottom player strip */}
