@@ -489,17 +489,6 @@ export const PuzzleMode: React.FC<PuzzleModeProps> = ({ onBackToMenu }) => {
                 <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                   {currentPuzzle?.category} • {currentPuzzle?.rating}
                 </span>
-                <button 
-                  className="secondary" 
-                  onClick={() => chessSounds.toggle()}
-                  style={{ 
-                    opacity: chessSounds.isEnabled() ? 1 : 0.5, 
-                    padding: '0.4rem 0.6rem',
-                    fontSize: '0.9rem'
-                  }}
-                >
-                  {chessSounds.isEnabled() ? '🔊' : '🔇'}
-                </button>
               </div>
             </div>
           </div>

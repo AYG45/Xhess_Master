@@ -692,13 +692,6 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
           <button onClick={onBackToMenu} className="og-leaveBtn">
             Leave game
           </button>
-          <button 
-            className="og-leaveBtn" 
-            onClick={() => chessSounds.toggle()}
-            style={{ opacity: chessSounds.isEnabled() ? 1 : 0.5, padding: '0.55rem 0.7rem' }}
-          >
-            {chessSounds.isEnabled() ? '🔊' : '🔇'}
-          </button>
         </header>
 
         {/* Waiting for opponent */}

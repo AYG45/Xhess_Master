@@ -12,36 +12,36 @@ export class ChessSounds {
   }
 
   private initSounds() {
-    // Define sound configurations - mapped to actual files in public/sounds/
+    // Define sound configurations - only using files that exist in public/sounds/
     const soundConfigs = [
-      // Regular piece move (note: you have move.mp3.wav - consider renaming to move.wav or move.mp3)
-      { name: 'move', src: ['/sounds/move.mp3.wav', '/sounds/move.wav', '/sounds/move.mp3', '/sounds/move.ogg'] },
+      // Regular piece move
+      { name: 'move', src: ['/sounds/move.mp3.wav'] },
       // Piece capture
-      { name: 'capture', src: ['/sounds/capture.mp3', '/sounds/capture.wav', '/sounds/capture.ogg'] },
-      // King in check (using your move-check.mp3)
-      { name: 'check', src: ['/sounds/move-check.mp3', '/sounds/check.mp3', '/sounds/check.wav', '/sounds/check.ogg'] },
-      // Checkmate (reusing capture sound if no specific file exists)
-      { name: 'checkmate', src: ['/sounds/checkmate.mp3', '/sounds/move-check.mp3', '/sounds/capture.mp3'] },
+      { name: 'capture', src: ['/sounds/capture.mp3'] },
+      // King in check
+      { name: 'check', src: ['/sounds/move-check.mp3'] },
+      // Checkmate (reusing move-check sound)
+      { name: 'checkmate', src: ['/sounds/move-check.mp3'] },
       // Game start
-      { name: 'start', src: ['/sounds/start.mp3', '/sounds/start.wav', '/sounds/start.ogg'] },
+      { name: 'start', src: ['/sounds/start.mp3'] },
       // Illegal move
-      { name: 'illegal', src: ['/sounds/illegal.mp3', '/sounds/move-check.mp3'] },
-      // Castling (special move sound)
-      { name: 'castle', src: ['/sounds/castle.mp3', '/sounds/castle.wav', '/sounds/castle.ogg', '/sounds/move.mp3.wav'] },
+      { name: 'illegal', src: ['/sounds/illegal.mp3'] },
+      // Castling
+      { name: 'castle', src: ['/sounds/castle.mp3'] },
       // Pawn promotion
-      { name: 'promote', src: ['/sounds/promote.mp3', '/sounds/promote.wav', '/sounds/promote.ogg', '/sounds/capture.mp3'] },
+      { name: 'promote', src: ['/sounds/promote.mp3'] },
       // Game end (checkmate, draw, resignation)
-      { name: 'gameend', src: ['/sounds/game-end.webm', '/sounds/game-end.mp3', '/sounds/checkmate.mp3', '/sounds/capture.mp3'] },
-      // 10 seconds warning (clock running low)
-      { name: 'tenseconds', src: ['/sounds/tenseconds.mp3', '/sounds/tenseconds.wav', '/sounds/tenseconds.ogg'] },
+      { name: 'gameend', src: ['/sounds/game-end.webm'] },
+      // 10 seconds warning
+      { name: 'tenseconds', src: ['/sounds/tenseconds.mp3'] },
     ];
 
-    // Initialize Howl instances
+    // Initialize Howl instances - using Web Audio API (not html5) to prevent audio pool exhaustion
     for (const config of soundConfigs) {
       const howl = new Howl({
         src: config.src,
         volume: 0.5,
-        html5: true, // Force HTML5 Audio for better mobile compatibility
+        html5: false, // Use Web Audio API - prevents "HTML5 Audio pool exhausted" error
         preload: true,
         onloaderror: () => {
           console.warn(`Sound file not found: ${config.name}`);

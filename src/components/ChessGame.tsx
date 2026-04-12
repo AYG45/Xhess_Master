@@ -905,7 +905,8 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
           .cg-board-area {
             flex: 1;
             min-height: 0;
-            padding: 0.4rem 0.5rem;
+            padding: 0.25rem 0.5rem;
+            display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
@@ -921,14 +922,14 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
             align-items: center !important;
           }
           
-          /* Board: square based on viewport width */
+          /* Board: properly centered with dynamic sizing */
           .cg-board-wrap {
             flex: none !important;
-            width: calc(100vw - 1rem) !important;
-            height: calc(100vw - 1rem) !important;
-            max-width: 440px !important;
-            max-height: 440px !important;
-            margin: 0 auto;
+            width: min(calc(100vw - 1rem), calc(100vh - 200px)) !important;
+            height: min(calc(100vw - 1rem), calc(100vh - 200px)) !important;
+            max-width: 400px !important;
+            max-height: 400px !important;
+            margin: auto !important;
           }
           
           /* Sidebar: fixed height at bottom */
@@ -1052,13 +1053,6 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
             </button>
           )}
           <span style={{ color: 'var(--text-muted)', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', fontWeight: 600 }}>
-          <button 
-            className="cb" 
-            onClick={() => chessSounds.toggle()}
-            style={{ opacity: chessSounds.isEnabled() ? 1 : 0.5 }}
-          >
-            {chessSounds.isEnabled() ? '🔊' : '🔇'}
-          </button>
             {mode === 'local' ? 'Local Play' : mode === 'vsBot' ? 'vs Engine' : mode === 'analyze' ? (savedGame ? 'Game Review' : 'Analysis') : mode === 'online' ? `Online · ${timeControl || 'Custom'}` : 'Game'}
             {mode === 'analyze' && savedGame && isInVariation && <span style={{ color: 'var(--accent-primary)', marginLeft: '0.5rem' }}>• Variation</span>}
           </span>
