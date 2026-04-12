@@ -45,6 +45,8 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
   const [selectedMoveIdx, setSelectedMoveIdx]   = useState<number | null>(null);
   const [originalMoves, setOriginalMoves]       = useState<string[]>([]);
   const [isInVariation, setIsInVariation]       = useState(false);
+  const [showPromotionDialog, setShowPromotionDialog] = useState(false);
+  const [promotionMove, setPromotionMove]       = useState<{ from: string; to: string } | null>(null);
 
   const gameRef = useRef(game);
   gameRef.current = game;
@@ -55,14 +57,18 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
     analyzePosition, analyzePositionAsync, getBestMove, resetAnalysis,
   } = useStockfish();
 
-  // Play check/checkmate sounds when game state changes
+  // Play check/checkmate/game end sounds when game state changes
   useEffect(() => {
     if (game.inCheck()) {
       if (game.isCheckmate()) {
         chessSounds.playCheckmate();
+        chessSounds.playGameEnd();
       } else {
         chessSounds.playCheck();
       }
+    } else if (game.isGameOver()) {
+      // Game ended by draw (stalemate, repetition, insufficient material, 50-move rule)
+      chessSounds.playGameEnd();
     }
   }, [position]); // Listen to position changes
 
@@ -216,12 +222,24 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
     setTimeout(() => makeMoveRef.current(bestMove.slice(0, 2), bestMove.slice(2, 4)), 300);
   }, [bestMove, mode, gameStarted, game, playerColor, botDifficulty]);
 
-  const makeMove = async (from: string, to: string): Promise<boolean> => {
+  const makeMove = async (from: string, to: string, promotionPiece?: string): Promise<boolean> => {
     try {
+      // Check if this is a pawn promotion move
+      const piece = gameRef.current.get(from as Square);
+      const isPromotion = piece?.type === 'p' && 
+        ((piece.color === 'w' && to[1] === '8') || (piece.color === 'b' && to[1] === '1'));
+
+      // If promotion and no piece selected yet, show dialog
+      if (isPromotion && !promotionPiece) {
+        setPromotionMove({ from, to });
+        setShowPromotionDialog(true);
+        return false;
+      }
+
       const beforeFen = gameRef.current.fen();
       const gc = new Chess();
       gameRef.current.history({ verbose: true }).forEach(m => gc.move({ from: m.from, to: m.to, promotion: m.promotion }));
-      const moveObj = gc.move({ from, to, promotion: 'q' });
+      const moveObj = gc.move({ from, to, promotion: promotionPiece || 'q' });
       if (!moveObj) {
         chessSounds.playIllegalMove();
         return false;
@@ -277,6 +295,15 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
   // Keep ref pointing at the latest makeMove implementation.
   makeMoveRef.current = makeMove;
 
+  // Handle promotion piece selection
+  const handlePromotion = (piece: string) => {
+    if (promotionMove) {
+      setShowPromotionDialog(false);
+      makeMove(promotionMove.from, promotionMove.to, piece);
+      setPromotionMove(null);
+    }
+  };
+
   const onDrop = (src: string, tgt: string) => {
     if (mode === 'vsBot' && (!gameStarted || game.turn() !== playerColor[0])) return false;
     makeMove(src, tgt); return true;
@@ -303,6 +330,8 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
           setSelectedSquare(clicked);
           setLegalMoves(game.moves({ square: clicked, verbose: true }).map(m => m.to));
         } else {
+          // User tried to move to an illegal square (not their own piece)
+          chessSounds.playIllegalMove();
           setSelectedSquare(null);
           setLegalMoves([]);
         }
@@ -1122,6 +1151,70 @@ export const ChessGame = ({ mode, onBackToMenu, timeControl, savedGame }: ChessG
                 },
               }}
             />
+
+            {/* Promotion Dialog */}
+            {showPromotionDialog && (
+              <div style={{
+                position: 'absolute', inset: 0, zIndex: 200,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(4px)'
+              }} role="dialog" aria-modal="true">
+                <div style={{
+                  background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.15)',
+                  padding: '1.5rem', borderRadius: '8px', textAlign: 'center'
+                }}>
+                  <div style={{
+                    fontSize: '14px', fontWeight: 600, color: '#fff',
+                    marginBottom: '1rem', fontFamily: 'Space Grotesk, sans-serif'
+                  }}>Promote to</div>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    {['q', 'r', 'b', 'n'].map((piece) => {
+                      const isWhite = game.turn() === 'w';
+                      const symbols: Record<string, string> = {
+                        q: isWhite ? '♕' : '♛',
+                        r: isWhite ? '♖' : '♜',
+                        b: isWhite ? '♗' : '♝',
+                        n: isWhite ? '♘' : '♞'
+                      };
+                      const names: Record<string, string> = {
+                        q: 'Queen', r: 'Rook', b: 'Bishop', n: 'Knight'
+                      };
+                      return (
+                        <button
+                          key={piece}
+                          onClick={() => handlePromotion(piece)}
+                          style={{
+                            width: '64px', height: '64px',
+                            fontSize: '36px',
+                            background: '#2a2a2a',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            display: 'flex', flexDirection: 'column',
+                            alignItems: 'center', justifyContent: 'center',
+                            gap: '4px',
+                            transition: 'all 0.15s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = '#3a3a3a';
+                            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = '#2a2a2a';
+                            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                          }}
+                          type="button"
+                          title={names[piece]}
+                        >
+                          <span>{symbols[piece]}</span>
+                          <span style={{ fontSize: '10px', color: '#888' }}>{names[piece]}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Move quality badges */}
             {moveQualityBadges.map((badge, index) => {

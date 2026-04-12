@@ -24,12 +24,16 @@ export class ChessSounds {
       { name: 'checkmate', src: ['/sounds/checkmate.mp3', '/sounds/move-check.mp3', '/sounds/capture.mp3'] },
       // Game start
       { name: 'start', src: ['/sounds/start.mp3', '/sounds/start.wav', '/sounds/start.ogg'] },
-      // Illegal move (subtle error - using check sound or silent)
+      // Illegal move
       { name: 'illegal', src: ['/sounds/illegal.mp3', '/sounds/move-check.mp3'] },
       // Castling (special move sound)
       { name: 'castle', src: ['/sounds/castle.mp3', '/sounds/castle.wav', '/sounds/castle.ogg', '/sounds/move.mp3.wav'] },
       // Pawn promotion
       { name: 'promote', src: ['/sounds/promote.mp3', '/sounds/promote.wav', '/sounds/promote.ogg', '/sounds/capture.mp3'] },
+      // Game end (checkmate, draw, resignation)
+      { name: 'gameend', src: ['/sounds/game-end.webm', '/sounds/game-end.mp3', '/sounds/checkmate.mp3', '/sounds/capture.mp3'] },
+      // 10 seconds warning (clock running low)
+      { name: 'tenseconds', src: ['/sounds/tenseconds.mp3', '/sounds/tenseconds.wav', '/sounds/tenseconds.ogg'] },
     ];
 
     // Initialize Howl instances
@@ -51,10 +55,10 @@ export class ChessSounds {
 
   private play(name: string) {
     if (!this.enabled || !this.initialized) return;
-    
+
     const sound = this.sounds.get(name);
-    if (sound && sound.state() === 'loaded') {
-      // Stop any currently playing instance of this sound
+    if (sound) {
+      // Try to play - Howler handles loading state internally
       sound.stop();
       sound.play();
     }
@@ -98,6 +102,16 @@ export class ChessSounds {
   // Promotion sound - pawn promotion
   playPromote() {
     this.play('promote');
+  }
+
+  // Game end sound - checkmate, draw, or resignation
+  playGameEnd() {
+    this.play('gameend');
+  }
+
+  // 10 seconds warning - clock running low
+  playTenSeconds() {
+    this.play('tenseconds');
   }
 
   // Toggle sounds on/off

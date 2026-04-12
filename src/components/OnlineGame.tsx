@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Chess } from 'chess.js';
+import { Chess, type Square } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 import { socketService, type GameRoom, type Player } from '../services/socketService';
 import { useAuth } from '../contexts/AuthContext';
@@ -57,10 +57,13 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
   const [showPromotionDialog, setShowPromotionDialog] = useState(false);
   const [promotionMove, setPromotionMove] = useState<{ from: string; to: string } | null>(null);
   const [opponentName, setOpponentName] = useState<string>('');
+  const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
+  const [legalMoves, setLegalMoves] = useState<Square[]>([]);
 
   const gameRef = useRef(game);
   gameRef.current = game;
   const initializedRef = useRef(false);
+  const tenSecondsPlayedRef = useRef(false);
 
   // Calculate material advantage
   const calculateMaterialAdvantage = (forColor: 'white' | 'black'): number => {
@@ -142,6 +145,21 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
       }
     }
   }, [position]); // Listen to position changes
+
+  // Play 10 seconds warning when clock hits exactly 10 seconds
+  useEffect(() => {
+    if (!playerColor || gameStatus !== 'playing') return;
+    
+    const myTime = playerColor === 'white' ? timeLeft.white : timeLeft.black;
+    
+    if (myTime === 10 && !tenSecondsPlayedRef.current) {
+      chessSounds.playTenSeconds();
+      tenSecondsPlayedRef.current = true;
+    } else if (myTime > 10) {
+      // Reset when time goes back above 10 (new game, increment, etc.)
+      tenSecondsPlayedRef.current = false;
+    }
+  }, [timeLeft, playerColor, gameStatus]);
 
   const calculateCapturedPiecesFromFEN = (fen: string) => {
     const startingPieces = { p: 8, n: 2, b: 2, r: 2, q: 1, k: 1 };
@@ -297,6 +315,47 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
 
   const onDrop = (sourceSquare: string, targetSquare: string) => {
     return makeMove(sourceSquare, targetSquare);
+  };
+
+  const toSquare = (s: string): Square | null => {
+    return /^[a-h][1-8]$/.test(s) ? (s as Square) : null;
+  };
+
+  const onSquareClick = ({ square }: { square: string }) => {
+    if (gameStatus !== 'playing' || !playerColor) return;
+    
+    const isMyTurn = (game.turn() === 'w' && playerColor === 'white') ||
+                     (game.turn() === 'b' && playerColor === 'black');
+    if (!isMyTurn) return;
+    
+    const clicked = toSquare(square);
+    if (!clicked) return;
+    
+    if (selectedSquare) {
+      if (legalMoves.includes(clicked)) {
+        makeMove(selectedSquare, clicked);
+        setSelectedSquare(null);
+        setLegalMoves([]);
+      } else {
+        const p = game.get(clicked);
+        if (p && p.color === game.turn()) {
+          // Select another of my pieces
+          setSelectedSquare(clicked);
+          setLegalMoves(game.moves({ square: clicked, verbose: true }).map(m => m.to));
+        } else {
+          // Illegal move attempted
+          chessSounds.playIllegalMove();
+          setSelectedSquare(null);
+          setLegalMoves([]);
+        }
+      }
+    } else {
+      const p = game.get(clicked);
+      if (p && p.color === game.turn()) {
+        setSelectedSquare(clicked);
+        setLegalMoves(game.moves({ square: clicked, verbose: true }).map(m => m.to));
+      }
+    }
   };
 
   const formatTime = (seconds: number): string => {
@@ -795,9 +854,17 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
                           [lastMove.from]: { backgroundColor: 'rgba(255,255,255,0.15)' },
                           [lastMove.to]: { backgroundColor: 'rgba(255,255,255,0.25)' },
                         }),
+                        // Selected square highlight
+                        ...(selectedSquare && { [selectedSquare]: { backgroundColor: 'rgba(255,255,255,0.2)' } }),
+                        // Legal move indicators
+                        ...legalMoves.reduce((acc, sq) => {
+                          acc[sq] = { background: 'radial-gradient(circle,rgba(255,255,255,0.3) 20%,transparent 22%)' };
+                          return acc;
+                        }, {} as Record<string, React.CSSProperties>),
                       },
                       onPieceDrop: ({ sourceSquare, targetSquare }) =>
                         targetSquare ? onDrop(sourceSquare, targetSquare) : false,
+                      onSquareClick,
                     }}
                   />
 
