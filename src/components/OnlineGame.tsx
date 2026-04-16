@@ -66,6 +66,12 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
   const initializedRef = useRef(false);
   const tenSecondsPlayedRef = useRef(false);
   const moveCountRef = useRef(0);
+  const currentUserRef = useRef(currentUser);
+  currentUserRef.current = currentUser;
+  const gameRoomRef = useRef(gameRoom);
+  gameRoomRef.current = gameRoom;
+  const playerColorRef = useRef(playerColor);
+  playerColorRef.current = playerColor;
 
   // Calculate material advantage
   const calculateMaterialAdvantage = (forColor: 'white' | 'black'): number => {
@@ -250,16 +256,31 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
     });
 
     socketService.onGameEnd((result) => {
+      console.log('Game end event received:', result);
       setGameResult(result);
       setGameStatus('finished');
 
-      // Save game to Firebase
+      // Save game to Firebase using refs to get latest values
+      const currentUser = currentUserRef.current;
+      const gameRoom = gameRoomRef.current;
+      const playerColor = playerColorRef.current;
+
+      console.log('Save game check - currentUser:', !!currentUser, 'gameRoom:', !!gameRoom, 'playerColor:', playerColor);
+
       if (currentUser && gameRoom) {
         const moves = gameRoom.moves || [];
         const finalGame = new Chess(gameRoom.fen);
         const pgn = finalGame.pgn();
         const finalFen = finalGame.fen();
         const gameResult = result.winner ? result.winner : 'draw';
+
+        console.log('Saving game to Firebase:', {
+          userId: currentUser.uid,
+          gameMode: 'online',
+          playerColor,
+          movesCount: moves.length,
+          result: gameResult
+        });
 
         saveGame({
           userId: currentUser.uid,
@@ -270,9 +291,13 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
           createdAt: Date.now(),
           pgn,
           finalFen
+        }).then(() => {
+          console.log('Game saved successfully to Firebase');
         }).catch(error => {
           console.error('Failed to save online game:', error);
         });
+      } else {
+        console.log('Game not saved - missing currentUser or gameRoom');
       }
     });
 
