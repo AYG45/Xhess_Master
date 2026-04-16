@@ -271,8 +271,8 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
         const finalFen = currentGame.fen();
         const gameResult = result.winner ? result.winner : 'draw';
 
-        // Use chess.js history() to get moves in SAN format
-        const moves = currentGame.history();
+        // Use chess.js history() with verbose: false to get SAN notation strings
+        const moves = currentGame.history({ verbose: false });
 
         saveGame({
           userId: currentUser.uid,
