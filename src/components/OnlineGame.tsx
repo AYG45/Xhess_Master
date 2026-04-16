@@ -263,16 +263,19 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
       const currentUser = currentUserRef.current;
       const gameRoom = gameRoomRef.current;
       const playerColor = playerColorRef.current;
-      const currentGame = gameRef.current;
 
-      if (currentUser && gameRoom && currentGame) {
-        // Use the local game state to get all moves including the final one
-        const pgn = currentGame.pgn();
-        const finalFen = currentGame.fen();
+      if (currentUser && gameRoom) {
+        // Use the server's authoritative move list from gameRoom
+        const moves = gameRoom.moves || [];
+        const finalFen = gameRoom.fen;
         const gameResult = result.winner ? result.winner : 'draw';
 
-        // Use chess.js history() with verbose: false to get SAN notation strings
-        const moves = currentGame.history({ verbose: false });
+        // Generate PGN from moves
+        const tempGame = new Chess();
+        moves.forEach(move => {
+          tempGame.move(move);
+        });
+        const pgn = tempGame.pgn();
 
         saveGame({
           userId: currentUser.uid,
