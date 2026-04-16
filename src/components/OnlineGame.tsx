@@ -4,6 +4,7 @@ import { Chessboard } from 'react-chessboard';
 import { socketService, type GameRoom, type Player } from '../services/socketService';
 import { useAuth } from '../contexts/AuthContext';
 import { chessSounds } from '../utils/sounds';
+import { saveGame } from '../services/gameService';
 
 interface OnlineGameProps {
   timeControl: string;
@@ -251,6 +252,28 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
     socketService.onGameEnd((result) => {
       setGameResult(result);
       setGameStatus('finished');
+
+      // Save game to Firebase
+      if (currentUser && gameRoom) {
+        const moves = gameRoom.moves || [];
+        const finalGame = new Chess(gameRoom.fen);
+        const pgn = finalGame.pgn();
+        const finalFen = finalGame.fen();
+        const gameResult = result.winner ? result.winner : 'draw';
+
+        saveGame({
+          userId: currentUser.uid,
+          gameMode: 'online',
+          playerColor: playerColor || undefined,
+          moves,
+          result: gameResult,
+          createdAt: Date.now(),
+          pgn,
+          finalFen
+        }).catch(error => {
+          console.error('Failed to save online game:', error);
+        });
+      }
     });
 
     // Error handling done via try/catch in API calls
