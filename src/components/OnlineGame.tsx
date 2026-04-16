@@ -271,8 +271,8 @@ export const OnlineGame: React.FC<OnlineGameProps> = ({
         const finalFen = currentGame.fen();
         const gameResult = result.winner ? result.winner : 'draw';
 
-        // Parse PGN to get moves array
-        const moves = pgn.split(' ').filter(move => move.length > 0 && !move.includes('.'));
+        // Use chess.js history() to get moves in SAN format
+        const moves = currentGame.history();
 
         saveGame({
           userId: currentUser.uid,
